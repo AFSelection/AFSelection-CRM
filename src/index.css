@@ -1,0 +1,28 @@
+@import "tailwindcss";
+
+@theme {
+  --font-display: "Outfit", sans-serif;
+  --font-body: "Plus Jakarta Sans", sans-serif;
+  --color-primary: #111317;
+  --color-primary-hover: #1f232b;
+  --color-accent-emerald: #10B981;
+  --color-accent-red: #EF4444;
+  --color-bg-canvas: #F4F3EF;
+  --color-border-light: #E2E0D8;
+}
+
+@layer base {
+  body {
+    @apply bg-bg-canvas text-primary font-body antialiased min-h-screen;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  body::-webkit-scrollbar {
+    display: none;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display font-black tracking-tight uppercase;
+  }
+}
