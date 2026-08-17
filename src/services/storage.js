@@ -73,13 +73,14 @@ export async function deleteLeadDB(id) {
   if (error) throw error;
 }
 
-// Helpers for mapping Database <-> Frontend JavaScript objects
 function mapListingFromDB(db) {
   if (!db) return null;
   return {
     ...db,
     sectionId: db.section_id,
-    createdAt: db.created_at
+    createdAt: db.created_at,
+    isOffer: db.is_offer,
+    oldPrice: db.old_price
   };
 }
 
@@ -88,10 +89,14 @@ function mapListingToDB(js) {
   const db = { ...js };
   db.section_id = js.sectionId;
   db.created_at = js.createdAt || new Date().toISOString();
+  db.is_offer = js.isOffer;
+  db.old_price = js.oldPrice;
   
   // Clean up React state fields and map correctly
   delete db.sectionId;
   delete db.createdAt;
+  delete db.isOffer;
+  delete db.oldPrice;
   
   // Make sure array is passed
   if (typeof db.images === 'string') {

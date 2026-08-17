@@ -98,7 +98,9 @@ export default function ListingsManagerView({ data, setData, refreshData }) {
     bathrooms: '',
     garages: '',
     featured: false,
-    description: ''
+    description: '',
+    isOffer: false,
+    oldPrice: ''
   });
 
   const sections = data.sections || [];
@@ -152,7 +154,9 @@ export default function ListingsManagerView({ data, setData, refreshData }) {
       bathrooms: '2',
       garages: '1',
       featured: false,
-      description: ''
+      description: '',
+      isOffer: false,
+      oldPrice: ''
     });
     setIsModalOpen(true);
   };
@@ -183,7 +187,9 @@ export default function ListingsManagerView({ data, setData, refreshData }) {
       bathrooms: item.bathrooms || '',
       garages: item.garages || '',
       featured: item.featured || false,
-      description: item.description || ''
+      description: item.description || '',
+      isOffer: item.isOffer || false,
+      oldPrice: item.oldPrice !== undefined && item.oldPrice !== null ? item.oldPrice : ''
     });
     setIsModalOpen(true);
   };
@@ -281,7 +287,9 @@ export default function ListingsManagerView({ data, setData, refreshData }) {
       featured: formData.featured,
       description: formData.description,
       images: uploadedImages,
-      videos: uploadedVideos
+      videos: uploadedVideos,
+      isOffer: formData.isOffer,
+      oldPrice: formData.oldPrice ? Number(formData.oldPrice) : null
     };
 
     // Specific specs based on section
@@ -601,6 +609,41 @@ export default function ListingsManagerView({ data, setData, refreshData }) {
                   onChange={(val) => setFormData({ ...formData, category: val })}
                   options={categoriesForForm}
                 />
+              </div>
+
+              {/* Price Drop (Offer) Section */}
+              <div className="p-4.5 bg-amber-500/5 border border-amber-500/10 rounded-2xl space-y-4">
+                <div className="flex items-center gap-2.5">
+                  <input
+                    type="checkbox"
+                    id="isOffer"
+                    className="w-4.5 h-4.5 accent-amber-500 cursor-pointer"
+                    checked={formData.isOffer}
+                    onChange={(e) => setFormData({ ...formData, isOffer: e.target.checked })}
+                  />
+                  <label htmlFor="isOffer" className="text-xs font-bold text-primary/80 uppercase cursor-pointer select-none tracking-wide">
+                    ¿Esta unidad Bajó de Precio / Está en Oferta?
+                  </label>
+                </div>
+
+                {formData.isOffer && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-1 duration-200">
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-extrabold tracking-widest text-primary/40 uppercase block">Precio Anterior (Antes) *</label>
+                      <input
+                        type="number"
+                        required
+                        className="w-full bg-white border border-border-light focus:border-primary text-xs text-primary rounded-xl py-3.5 px-4 outline-none"
+                        placeholder="Ej: 210000"
+                        value={formData.oldPrice}
+                        onChange={(e) => setFormData({ ...formData, oldPrice: e.target.value })}
+                      />
+                    </div>
+                    <div className="flex items-end pb-3 text-xs text-primary/45 font-semibold italic">
+                      Se mostrará la etiqueta de descuento automática en la portada del cliente.
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Location & Condition */}
