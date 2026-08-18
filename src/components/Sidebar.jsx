@@ -26,7 +26,7 @@ export default function Sidebar({ activeTab, setActiveTab, leadsCount, user, onL
             AF
           </div>
           <span className="font-display font-bold text-sm tracking-wide">
-            SELECTION <span className="text-[10px] text-accent-red font-bold uppercase ml-1">CRM</span>
+            SELECT <span className="text-[10px] text-accent-red font-bold uppercase ml-1">CRM</span>
           </span>
         </div>
 
@@ -59,7 +59,7 @@ export default function Sidebar({ activeTab, setActiveTab, leadsCount, user, onL
           </div>
           <div className="flex flex-col">
             <span className="font-display font-extrabold text-base tracking-wide leading-none">
-              AF SELECTION
+              AF SELECT
             </span>
             <span className="text-[9px] font-extrabold tracking-widest text-accent-red uppercase mt-1">
               PANEL DE CONTROL

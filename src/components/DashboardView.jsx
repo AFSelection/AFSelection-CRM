@@ -33,7 +33,7 @@ export default function DashboardView({ data, setActiveTab, onOpenAddListing }) 
         <div>
           <h1 className="text-2xl sm:text-3xl font-black text-primary tracking-tight">Panel de Control</h1>
           <p className="text-sm text-primary/45 mt-1 leading-relaxed">
-            Visión general del inventario, leads entrantes y secciones activas en AF Selection.
+            Visión general del inventario, leads entrantes y secciones activas en AF Select.
           </p>
         </div>
 

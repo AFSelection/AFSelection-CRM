@@ -50,7 +50,7 @@ export default function Login({ onLoginSuccess }) {
         {/* Header Logo */}
         <div className="text-center mb-8">
           <div className="font-display text-2xl font-black tracking-tight inline-flex items-center gap-2 mb-2 text-primary">
-            <span>AF</span> SELECTION
+            <span>AF</span> SELECT
             <span className="bg-primary text-white text-[10px] font-bold px-2 py-0.5 rounded-md">CRM</span>
           </div>
           <p className="text-xs font-semibold tracking-wider text-primary/40 uppercase">
