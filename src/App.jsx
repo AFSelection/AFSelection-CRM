@@ -5,6 +5,7 @@ import DashboardView from './components/DashboardView';
 import ListingsManagerView from './components/ListingsManagerView';
 import SectionsManagerView from './components/SectionsManagerView';
 import LeadsManagerView from './components/LeadsManagerView';
+import HeroManagerView from './components/HeroManagerView';
 import { supabase } from './services/supabase';
 import { INITIAL_SECTIONS, fetchListings, fetchLeads } from './services/storage';
 
@@ -136,6 +137,10 @@ export default function App() {
             setData={(newData) => setData(prev => ({ ...prev, ...newData }))}
             refreshData={loadDatabaseData}
           />
+        )}
+
+        {activeTab === 'hero' && (
+          <HeroManagerView />
         )}
       </main>
     </div>

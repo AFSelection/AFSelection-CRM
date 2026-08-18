@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { LayoutDashboard, Car, Layers, Inbox, ExternalLink, LogOut, Menu, X } from 'lucide-react';
+import { LayoutDashboard, Car, Layers, Inbox, ExternalLink, LogOut, Menu, X, Image } from 'lucide-react';
 
 export default function Sidebar({ activeTab, setActiveTab, leadsCount, user, onLogout }) {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -9,6 +9,7 @@ export default function Sidebar({ activeTab, setActiveTab, leadsCount, user, onL
     { id: 'dashboard', name: 'Dashboard', icon: LayoutDashboard },
     { id: 'listings', name: 'Inventario / Publicaciones', icon: Car },
     { id: 'sections', name: 'Secciones y Categorías', icon: Layers },
+    { id: 'hero', name: 'Imágenes del Hero', icon: Image },
     { id: 'leads', name: 'Consultas / Leads', icon: Inbox, badge: pendingLeads }
   ];
 
