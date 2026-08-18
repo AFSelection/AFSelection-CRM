@@ -240,26 +240,6 @@ export default function HeroManagerView() {
         )}
       </div>
 
-      {/* Tips */}
-      <div className="bg-amber-50 border border-amber-200/60 rounded-3xl p-5 space-y-2">
-        <h3 className="text-[11px] font-black uppercase tracking-widest text-amber-700">Consejos</h3>
-        <ul className="text-[11px] text-amber-700/80 font-medium space-y-1.5 list-disc list-inside leading-relaxed">
-          <li>Las imágenes se muestran en el orden de la lista. Usá las flechas para reordenarlas.</li>
-          <li>Con una sola imagen, el efecto Ken Burns (zoom y paneo suave) se aplica continuamente.</li>
-          <li>Con múltiples imágenes, hay un crossfade automático cada 7 segundos.</li>
-          <li>Hacé clic en "Guardar Cambios" para que los cambios se vean en el sitio.</li>
-          <li>
-            Necesitás tener la tabla <code className="bg-amber-100 px-1 rounded">site_settings</code> creada en Supabase.
-            Si no la tenés, ejecutá el SQL que aparece abajo.
-          </li>
-        </ul>
-        <div className="mt-3 bg-amber-100/70 rounded-xl p-3">
-          <p className="text-[10px] font-black uppercase tracking-wider text-amber-700 mb-2">SQL requerido en Supabase</p>
-          <code className="text-[10px] text-amber-800 font-mono whitespace-pre-wrap block leading-relaxed">
-            {`CREATE TABLE IF NOT EXISTS site_settings (\n  key TEXT PRIMARY KEY,\n  value JSONB NOT NULL\n);\n\n-- Política para lectura pública (el front la necesita)\nALTER TABLE site_settings ENABLE ROW LEVEL SECURITY;\nCREATE POLICY "public read" ON site_settings FOR SELECT USING (true);\nCREATE POLICY "auth write" ON site_settings FOR ALL USING (auth.role() = 'authenticated');`}
-          </code>
-        </div>
-      </div>
     </div>
   );
 }
