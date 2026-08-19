@@ -3,6 +3,113 @@ import { Plus, Edit2, Trash2, MapPin, Image as ImageIcon, Search, X, ArrowUp, Ar
 import { saveListingDB, deleteListingDB } from '../services/storage';
 import { supabase } from '../services/supabase';
 
+// Location search with Nominatim (OpenStreetMap) geocoding
+function LocationSearch({ location, onTextChange, onSelect }) {
+  const [query, setQuery] = useState(location || '');
+  const [results, setResults] = useState([]);
+  const [searching, setSearching] = useState(false);
+  const [open, setOpen] = useState(false);
+  const containerRef = useRef(null);
+  const timerRef = useRef(null);
+
+  useEffect(() => {
+    setQuery(location || '');
+  }, [location]);
+
+  useEffect(() => {
+    const handler = (e) => {
+      if (containerRef.current && !containerRef.current.contains(e.target)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const doSearch = async (q) => {
+    if (q.length < 3) { setResults([]); setOpen(false); return; }
+    setSearching(true);
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&countrycodes=ar&limit=6&addressdetails=1`,
+        { headers: { 'Accept-Language': 'es' } }
+      );
+      const data = await res.json();
+      setResults(data);
+      setOpen(data.length > 0);
+    } catch {
+      setResults([]);
+    } finally {
+      setSearching(false);
+    }
+  };
+
+  const buildLabel = (item) => {
+    const a = item.address || {};
+    const parts = [];
+    if (a.road) {
+      parts.push(a.house_number ? `${a.road} ${a.house_number}` : a.road);
+    }
+    const area = a.suburb || a.city_district || a.town || a.village;
+    if (area) parts.push(area);
+    const city = a.city || a.municipality;
+    if (city && city !== area) parts.push(city);
+    if (a.state) parts.push(a.state);
+    return parts.length > 0
+      ? parts.join(', ')
+      : item.display_name.split(',').slice(0, 3).join(',').trim();
+  };
+
+  const handleChange = (e) => {
+    const val = e.target.value;
+    setQuery(val);
+    onTextChange(val);
+    clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => doSearch(val), 500);
+  };
+
+  const handleSelect = (item) => {
+    const label = buildLabel(item);
+    setQuery(label);
+    setOpen(false);
+    onSelect({ location: label, lat: item.lat, lng: item.lon });
+  };
+
+  return (
+    <div ref={containerRef} className="relative">
+      <div className="relative">
+        <MapPin size={13} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-primary/30 pointer-events-none" />
+        <input
+          type="text"
+          className="w-full bg-bg-canvas border border-border-light focus:border-primary focus:bg-white text-xs text-primary rounded-xl py-3.5 pl-9 pr-9 outline-none transition-colors"
+          placeholder="Buscar dirección o barrio..."
+          value={query}
+          onChange={handleChange}
+          onFocus={() => results.length > 0 && setOpen(true)}
+        />
+        {searching && (
+          <div className="absolute right-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 border-2 border-primary/20 border-t-primary rounded-full animate-spin" />
+        )}
+      </div>
+      {open && results.length > 0 && (
+        <div className="absolute z-50 left-0 right-0 top-full mt-1 bg-white border border-border-light rounded-xl shadow-xl max-h-60 overflow-y-auto divide-y divide-bg-canvas/50">
+          {results.map((item) => (
+            <div
+              key={item.place_id}
+              onClick={() => handleSelect(item)}
+              className="flex items-start gap-3 px-4 py-3 text-xs cursor-pointer hover:bg-bg-canvas transition-colors"
+            >
+              <MapPin size={12} className="text-primary/30 mt-0.5 flex-shrink-0" />
+              <div className="min-w-0">
+                <div className="font-semibold text-primary truncate">{buildLabel(item)}</div>
+                <div className="text-primary/35 text-[10px] truncate mt-0.5">{item.display_name}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // Reusable Custom Styled Select Component (Tailwind Custom Select)
 function CustomSelect({ label, value, onChange, options, disabled }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -101,7 +208,8 @@ export default function ListingsManagerView({ data, setData, refreshData }) {
     description: '',
     isOffer: false,
     oldPrice: '',
-    operationType: 'Venta'
+    operationType: 'Venta',
+    showAddress: true
   });
 
   const sections = data.sections || [];
@@ -158,7 +266,8 @@ export default function ListingsManagerView({ data, setData, refreshData }) {
       description: '',
       isOffer: false,
       oldPrice: '',
-      operationType: 'Venta'
+      operationType: 'Venta',
+      showAddress: true
     });
     setIsModalOpen(true);
   };
@@ -192,7 +301,8 @@ export default function ListingsManagerView({ data, setData, refreshData }) {
       description: item.description || '',
       isOffer: item.isOffer || false,
       oldPrice: item.oldPrice !== undefined && item.oldPrice !== null ? item.oldPrice : '',
-      operationType: item.operationType || 'Venta'
+      operationType: item.operationType || 'Venta',
+      showAddress: item.showAddress ?? true
     });
     setIsModalOpen(true);
   };
@@ -293,7 +403,8 @@ export default function ListingsManagerView({ data, setData, refreshData }) {
       videos: uploadedVideos,
       isOffer: formData.isOffer,
       oldPrice: formData.oldPrice ? Number(formData.oldPrice) : null,
-      operationType: formData.operationType || 'Venta'
+      operationType: formData.operationType || 'Venta',
+      showAddress: formData.showAddress !== false
     };
 
     // Specific specs based on section
@@ -664,13 +775,25 @@ export default function ListingsManagerView({ data, setData, refreshData }) {
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="sm:col-span-2 space-y-1.5">
                   <label className="text-[10px] font-extrabold tracking-widest text-primary/40 uppercase block">Ubicación física</label>
-                  <input
-                    type="text"
-                    className="w-full bg-bg-canvas border border-border-light focus:border-primary focus:bg-white text-xs text-primary rounded-xl py-3.5 px-4 outline-none transition-colors"
-                    placeholder="Ej: Yerba Buena, Tucumán / Nordelta, Tigre"
-                    value={formData.location}
-                    onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                  <LocationSearch
+                    location={formData.location}
+                    onTextChange={(val) => setFormData(prev => ({ ...prev, location: val }))}
+                    onSelect={({ location, lat, lng }) => setFormData(prev => ({ ...prev, location, lat, lng }))}
                   />
+                  {formData.sectionId === 'propiedades' && (
+                    <div className="flex items-center gap-2 pt-1">
+                      <input
+                        type="checkbox"
+                        id="showAddress"
+                        className="w-3.5 h-3.5 accent-primary cursor-pointer flex-shrink-0"
+                        checked={formData.showAddress}
+                        onChange={(e) => setFormData(prev => ({ ...prev, showAddress: e.target.checked }))}
+                      />
+                      <label htmlFor="showAddress" className="text-[10px] font-bold text-primary/50 cursor-pointer select-none leading-tight">
+                        Mostrar dirección exacta (altura) en la publicación
+                      </label>
+                    </div>
+                  )}
                 </div>
                 <CustomSelect
                   label="Estado / Condición"

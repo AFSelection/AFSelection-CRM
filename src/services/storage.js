@@ -88,7 +88,8 @@ function mapListingFromDB(db) {
     createdAt: db.created_at,
     isOffer: db.is_offer,
     oldPrice: db.old_price,
-    operationType: db.operation_type || 'Venta'
+    operationType: db.operation_type || 'Venta',
+    showAddress: db.show_address ?? true
   };
 }
 
@@ -100,6 +101,7 @@ function mapListingToDB(js) {
   db.is_offer = js.isOffer;
   db.old_price = js.oldPrice;
   db.operation_type = js.operationType || 'Venta';
+  db.show_address = js.showAddress ?? true;
 
   // Clean up React state fields and map correctly
   delete db.sectionId;
@@ -107,6 +109,7 @@ function mapListingToDB(js) {
   delete db.isOffer;
   delete db.oldPrice;
   delete db.operationType;
+  delete db.showAddress;
   
   // Make sure array is passed
   if (typeof db.images === 'string') {
