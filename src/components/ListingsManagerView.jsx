@@ -100,7 +100,8 @@ export default function ListingsManagerView({ data, setData, refreshData }) {
     featured: false,
     description: '',
     isOffer: false,
-    oldPrice: ''
+    oldPrice: '',
+    operationType: 'Venta'
   });
 
   const sections = data.sections || [];
@@ -156,7 +157,8 @@ export default function ListingsManagerView({ data, setData, refreshData }) {
       featured: false,
       description: '',
       isOffer: false,
-      oldPrice: ''
+      oldPrice: '',
+      operationType: 'Venta'
     });
     setIsModalOpen(true);
   };
@@ -189,7 +191,8 @@ export default function ListingsManagerView({ data, setData, refreshData }) {
       featured: item.featured || false,
       description: item.description || '',
       isOffer: item.isOffer || false,
-      oldPrice: item.oldPrice !== undefined && item.oldPrice !== null ? item.oldPrice : ''
+      oldPrice: item.oldPrice !== undefined && item.oldPrice !== null ? item.oldPrice : '',
+      operationType: item.operationType || 'Venta'
     });
     setIsModalOpen(true);
   };
@@ -289,7 +292,8 @@ export default function ListingsManagerView({ data, setData, refreshData }) {
       images: uploadedImages,
       videos: uploadedVideos,
       isOffer: formData.isOffer,
-      oldPrice: formData.oldPrice ? Number(formData.oldPrice) : null
+      oldPrice: formData.oldPrice ? Number(formData.oldPrice) : null,
+      operationType: formData.operationType || 'Venta'
     };
 
     // Specific specs based on section
@@ -311,6 +315,10 @@ export default function ListingsManagerView({ data, setData, refreshData }) {
           lng: Number(formData.lng)
         };
       }
+    } else if (formData.sectionId === 'inversiones') {
+      newItem.fuel = formData.fuel;
+      newItem.surface = Number(formData.surface) || 0;
+      newItem.rooms = Number(formData.rooms) || 0;
     }
 
     try {
@@ -485,6 +493,10 @@ export default function ListingsManagerView({ data, setData, refreshData }) {
     { label: 'Híbrido', value: 'Híbrido' },
     { label: 'Eléctrico', value: 'Eléctrico' }
   ];
+  const operationTypeOptions = [
+    { label: 'Venta', value: 'Venta' },
+    { label: 'Alquiler', value: 'Alquiler' }
+  ];
   const transmissionOptions = [
     { label: 'Automático', value: 'Automático' },
     { label: 'Manual', value: 'Manual' },
@@ -574,11 +586,13 @@ export default function ListingsManagerView({ data, setData, refreshData }) {
 
               {/* Subtitle */}
               <div className="space-y-1.5">
-                <label className="text-[10px] font-extrabold tracking-widest text-primary/40 uppercase block">Subtítulo o versión comercial</label>
+                <label className="text-[10px] font-extrabold tracking-widest text-primary/40 uppercase block">
+                  {formData.sectionId === 'inversiones' ? 'Empresa / Desarrolladora' : 'Subtítulo o versión comercial'}
+                </label>
                 <input
                   type="text"
                   className="w-full bg-bg-canvas border border-border-light focus:border-primary focus:bg-white text-xs text-primary rounded-xl py-3.5 px-4 outline-none transition-colors"
-                  placeholder="Ej: Motor 4.0L Weissach Package / Residencia con salida al golf"
+                  placeholder={formData.sectionId === 'inversiones' ? 'Ej: Grupo Constructor Alem' : 'Ej: Motor 4.0L Weissach Package / Residencia con salida al golf'}
                   value={formData.subtitle}
                   onChange={(e) => setFormData({ ...formData, subtitle: e.target.value })}
                 />
@@ -666,10 +680,22 @@ export default function ListingsManagerView({ data, setData, refreshData }) {
                 />
               </div>
 
+              {/* Operation type — only for propiedades */}
+              {formData.sectionId === 'propiedades' && (
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <CustomSelect
+                    label="Tipo de Operación"
+                    value={formData.operationType}
+                    onChange={(val) => setFormData({ ...formData, operationType: val })}
+                    options={operationTypeOptions}
+                  />
+                </div>
+              )}
+
               {/* Specifications box */}
               <div className="p-5 bg-bg-canvas/50 border border-border-light rounded-2xl space-y-5">
                 <h4 className="text-[10px] font-black tracking-widest text-primary/50 uppercase leading-none border-b border-border-light pb-3">
-                  Especificaciones ({formData.sectionId === 'autos' ? 'Vehículo' : 'Propiedad'})
+                  Especificaciones ({formData.sectionId === 'autos' ? 'Vehículo' : formData.sectionId === 'inversiones' ? 'Inversión' : 'Propiedad'})
                 </h4>
 
                 {formData.sectionId === 'autos' ? (
@@ -704,6 +730,39 @@ export default function ListingsManagerView({ data, setData, refreshData }) {
                       onChange={(val) => setFormData({ ...formData, transmission: val })}
                       options={transmissionOptions}
                     />
+                  </div>
+                ) : formData.sectionId === 'inversiones' ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="text-[9px] font-extrabold text-primary/40 uppercase block">Retorno Estimado</label>
+                      <input
+                        type="text"
+                        className="w-full bg-white border border-border-light focus:border-primary text-xs text-primary rounded-xl py-2.5 px-3 outline-none"
+                        placeholder="Ej: 14-17% Anual"
+                        value={formData.fuel}
+                        onChange={(e) => setFormData({ ...formData, fuel: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-[9px] font-extrabold text-primary/40 uppercase block">Avance de Obra (%)</label>
+                      <input
+                        type="number"
+                        className="w-full bg-white border border-border-light focus:border-primary text-xs text-primary rounded-xl py-2.5 px-3 outline-none"
+                        placeholder="Ej: 62"
+                        value={formData.surface}
+                        onChange={(e) => setFormData({ ...formData, surface: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-[9px] font-extrabold text-primary/40 uppercase block">Plazo (meses)</label>
+                      <input
+                        type="number"
+                        className="w-full bg-white border border-border-light focus:border-primary text-xs text-primary rounded-xl py-2.5 px-3 outline-none"
+                        placeholder="Ej: 18"
+                        value={formData.rooms}
+                        onChange={(e) => setFormData({ ...formData, rooms: e.target.value })}
+                      />
+                    </div>
                   </div>
                 ) : (
                   <div className="space-y-4">
@@ -1150,10 +1209,19 @@ export default function ListingsManagerView({ data, setData, refreshData }) {
                         <span className="bg-bg-canvas px-2.5 py-1 rounded-md">{item.kilometers?.toLocaleString()} KM</span>
                         <span className="bg-bg-canvas px-2.5 py-1 rounded-md">{item.transmission}</span>
                       </>
+                    ) : item.sectionId === 'inversiones' ? (
+                      <>
+                        {item.fuel && <span className="bg-bg-canvas px-2.5 py-1 rounded-md">{item.fuel}</span>}
+                        {item.surface != null && <span className="bg-bg-canvas px-2.5 py-1 rounded-md">{item.surface}% avance</span>}
+                        {item.rooms != null && <span className="bg-bg-canvas px-2.5 py-1 rounded-md">{item.rooms} meses</span>}
+                      </>
                     ) : (
                       <>
                         <span className="bg-bg-canvas px-2.5 py-1 rounded-md">{item.surface} M²</span>
                         <span className="bg-bg-canvas px-2.5 py-1 rounded-md">{item.rooms} Ambientes</span>
+                        {item.operationType && item.operationType !== 'Venta' && (
+                          <span className="bg-bg-canvas px-2.5 py-1 rounded-md">{item.operationType}</span>
+                        )}
                       </>
                     )}
                   </div>
@@ -1162,7 +1230,9 @@ export default function ListingsManagerView({ data, setData, refreshData }) {
                 {/* Card Bottom: Price and Edit tools */}
                 <div className="pt-4 border-t border-border-light flex items-center justify-between">
                   <div>
-                    <span className="text-[9px] font-extrabold text-primary/30 uppercase tracking-widest block">Precio Venta</span>
+                    <span className="text-[9px] font-extrabold text-primary/30 uppercase tracking-widest block">
+                      {item.sectionId === 'inversiones' ? 'Min. Inversión' : item.operationType === 'Alquiler' ? 'Precio Alquiler' : 'Precio Venta'}
+                    </span>
                     <span className="text-base font-black text-accent-red tracking-tight leading-none block">
                       {item.currency || 'USD'} {item.price?.toLocaleString()}
                     </span>

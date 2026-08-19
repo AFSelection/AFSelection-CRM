@@ -14,6 +14,13 @@ export const INITIAL_SECTIONS = [
     slug: 'propiedades',
     icon: 'Home',
     categories: ['Casas', 'Departamentos', 'PH', 'Terrenos / Lotes', 'Oficinas & Locales']
+  },
+  {
+    id: 'inversiones',
+    name: 'Inversiones',
+    slug: 'inversiones',
+    icon: 'TrendingUp',
+    categories: ['Desarrollo', 'Renta', 'Pozo', 'Constructivo', 'Comercial']
   }
 ];
 
@@ -80,7 +87,8 @@ function mapListingFromDB(db) {
     sectionId: db.section_id,
     createdAt: db.created_at,
     isOffer: db.is_offer,
-    oldPrice: db.old_price
+    oldPrice: db.old_price,
+    operationType: db.operation_type || 'Venta'
   };
 }
 
@@ -91,12 +99,14 @@ function mapListingToDB(js) {
   db.created_at = js.createdAt || new Date().toISOString();
   db.is_offer = js.isOffer;
   db.old_price = js.oldPrice;
-  
+  db.operation_type = js.operationType || 'Venta';
+
   // Clean up React state fields and map correctly
   delete db.sectionId;
   delete db.createdAt;
   delete db.isOffer;
   delete db.oldPrice;
+  delete db.operationType;
   
   // Make sure array is passed
   if (typeof db.images === 'string') {
