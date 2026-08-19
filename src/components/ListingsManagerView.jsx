@@ -28,14 +28,24 @@ function LocationSearch({ location, onTextChange, onSelect }) {
     if (q.length < 3) { setResults([]); setOpen(false); return; }
     setSearching(true);
     try {
-      const res = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&countrycodes=ar&limit=6&addressdetails=1`,
-        { headers: { 'Accept-Language': 'es' } }
-      );
-      const data = await res.json();
+      const base = 'https://nominatim.openstreetmap.org/search';
+      const headers = { 'Accept-Language': 'es' };
+      const p1 = new URLSearchParams({ format: 'json', q, countrycodes: 'ar', limit: '7', addressdetails: '1' });
+      const res1 = await fetch(`${base}?${p1}`, { headers });
+      if (!res1.ok) throw new Error(`HTTP ${res1.status}`);
+      let data = await res1.json();
+
+      if (data.length === 0) {
+        // Fallback: sin restricción de país para mejor cobertura
+        const p2 = new URLSearchParams({ format: 'json', q, limit: '7', addressdetails: '1' });
+        const res2 = await fetch(`${base}?${p2}`, { headers });
+        if (res2.ok) data = await res2.json();
+      }
+
       setResults(data);
       setOpen(data.length > 0);
-    } catch {
+    } catch (err) {
+      console.error('[LocationSearch]', err);
       setResults([]);
     } finally {
       setSearching(false);
