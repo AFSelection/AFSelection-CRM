@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../services/supabase';
-import { ImageIcon, Plus, Trash2, MoveUp, MoveDown, Save, Loader2, CheckCircle2, AlertCircle, ExternalLink } from 'lucide-react';
+import { ImageIcon, Plus, Trash2, MoveUp, MoveDown, Save, Loader2, CheckCircle2, AlertCircle, ExternalLink, Upload } from 'lucide-react';
 
 const DEFAULT_IMAGES = [
   'https://images.unsplash.com/photo-1614162692292-7ac56d7f7f1e?auto=format&fit=crop&w=2400&q=95'
@@ -25,11 +25,12 @@ async function saveHeroImages(images) {
 }
 
 export default function HeroManagerView() {
-  const [images, setImages]   = useState([]);
-  const [newUrl, setNewUrl]   = useState('');
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving]   = useState(false);
-  const [toast, setToast]     = useState(null); // { type: 'ok'|'err', msg }
+  const [images, setImages]       = useState([]);
+  const [newUrl, setNewUrl]       = useState('');
+  const [loading, setLoading]     = useState(true);
+  const [saving, setSaving]       = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [toast, setToast]         = useState(null); // { type: 'ok'|'err', msg }
 
   useEffect(() => {
     loadHeroImages().then((imgs) => {
@@ -68,6 +69,34 @@ export default function HeroManagerView() {
     if (swap < 0 || swap >= next.length) return;
     [next[idx], next[swap]] = [next[swap], next[idx]];
     setImages(next);
+  };
+
+  const handleFileUpload = async (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length === 0) return;
+    setUploading(true);
+    try {
+      const uploaded = [];
+      for (const file of files) {
+        const ext = file.name.split('.').pop();
+        const fileName = `hero_${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+        const { error } = await supabase.storage
+          .from('listings')
+          .upload(`hero/${fileName}`, file);
+        if (error) throw error;
+        const { data: { publicUrl } } = supabase.storage
+          .from('listings')
+          .getPublicUrl(`hero/${fileName}`);
+        uploaded.push(publicUrl);
+      }
+      setImages((prev) => [...prev, ...uploaded]);
+      showToast('ok', `${uploaded.length} imagen${uploaded.length > 1 ? 'es' : ''} subida${uploaded.length > 1 ? 's' : ''} correctamente.`);
+    } catch (err) {
+      showToast('err', 'Error al subir: ' + err.message);
+    } finally {
+      setUploading(false);
+      e.target.value = '';
+    }
   };
 
   const handleSave = async () => {
@@ -131,35 +160,56 @@ export default function HeroManagerView() {
         </div>
       )}
 
-      {/* Add new URL row */}
+      {/* Add new image row */}
       <div className="bg-white border border-border-light rounded-3xl p-6 space-y-4">
         <h2 className="text-xs font-black uppercase tracking-widest text-primary/40">
           Agregar imagen
         </h2>
-        <div className="flex gap-3">
-          <div className="flex-1 flex items-center gap-3 bg-bg-canvas border border-border-light rounded-2xl px-4 py-3 focus-within:border-primary transition-colors">
-            <ImageIcon size={16} className="text-primary/30 flex-shrink-0" />
+
+        {/* Upload from file */}
+        <div>
+          <p className="text-[11px] font-black uppercase tracking-widest text-primary/30 mb-2">Desde archivo</p>
+          <label className={`inline-flex items-center gap-2 border border-border-light rounded-2xl px-5 py-3 text-xs font-black uppercase tracking-wider transition-colors cursor-pointer ${uploading ? 'opacity-50 cursor-not-allowed' : 'bg-bg-canvas hover:border-primary text-primary'}`}>
+            {uploading
+              ? <><Loader2 size={14} className="animate-spin" /> Subiendo…</>
+              : <><Upload size={14} /> Subir desde dispositivo</>
+            }
             <input
-              type="url"
-              placeholder="https://ejemplo.com/imagen.jpg"
-              value={newUrl}
-              onChange={(e) => setNewUrl(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
-              className="flex-1 bg-transparent text-sm text-primary placeholder:text-primary/30 outline-none"
+              type="file"
+              multiple
+              accept="image/*"
+              disabled={uploading}
+              className="hidden"
+              onChange={handleFileUpload}
             />
-          </div>
-          <button
-            onClick={handleAdd}
-            className="flex items-center gap-2 bg-primary text-white text-xs font-black uppercase tracking-wider px-5 py-3 rounded-2xl hover:bg-primary/90 transition-colors cursor-pointer whitespace-nowrap"
-          >
-            <Plus size={14} />
-            Agregar
-          </button>
+          </label>
+          <span className="ml-3 text-[10px] text-primary/30 font-medium">JPG, PNG, WEBP — recomendado 1920×1080 px</span>
         </div>
-        <p className="text-[11px] text-primary/35 font-medium leading-relaxed">
-          Usá URLs directas de imágenes (terminan en .jpg, .png, .webp) o links de Unsplash, Cloudinary, etc.
-          Recomendamos imágenes horizontales de al menos 1920×1080 px.
-        </p>
+
+        {/* Add by URL */}
+        <div>
+          <p className="text-[11px] font-black uppercase tracking-widest text-primary/30 mb-2">Por URL externa</p>
+          <div className="flex gap-3">
+            <div className="flex-1 flex items-center gap-3 bg-bg-canvas border border-border-light rounded-2xl px-4 py-3 focus-within:border-primary transition-colors">
+              <ImageIcon size={16} className="text-primary/30 flex-shrink-0" />
+              <input
+                type="url"
+                placeholder="https://ejemplo.com/imagen.jpg"
+                value={newUrl}
+                onChange={(e) => setNewUrl(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
+                className="flex-1 bg-transparent text-sm text-primary placeholder:text-primary/30 outline-none"
+              />
+            </div>
+            <button
+              onClick={handleAdd}
+              className="flex items-center gap-2 bg-primary text-white text-xs font-black uppercase tracking-wider px-5 py-3 rounded-2xl hover:bg-primary/90 transition-colors cursor-pointer whitespace-nowrap"
+            >
+              <Plus size={14} />
+              Agregar
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* Image list */}
