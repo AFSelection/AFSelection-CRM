@@ -17,7 +17,7 @@ async function loadHeroImages() {
     .maybeSingle();
   if (error || !data) return DEFAULT_IMAGES;
   const val = data.value;
-  return Array.isArray(val) && val.length > 0 ? val : DEFAULT_IMAGES;
+  return Array.isArray(val) ? val : DEFAULT_IMAGES;
 }
 
 async function saveHeroImages(images) {
@@ -67,7 +67,7 @@ export default function HeroManagerView() {
     setTimeout(() => setToast(null), 3500);
   };
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
     const url = newUrl.trim();
     if (!url) return;
     if (!url.startsWith('http')) {
@@ -78,20 +78,40 @@ export default function HeroManagerView() {
       showToast('err', 'Esa imagen ya está en la lista.');
       return;
     }
-    setImages((prev) => [...prev, url]);
+    const next = [...images, url];
+    setImages(next);
     setNewUrl('');
+    try {
+      await saveHeroImages(next);
+      showToast('ok', 'Imagen agregada correctamente.');
+    } catch (err) {
+      showToast('err', 'Error al guardar: ' + err.message);
+    }
   };
 
-  const handleRemove = (idx) => {
-    setImages((prev) => prev.filter((_, i) => i !== idx));
+  const handleRemove = async (idx) => {
+    const next = images.filter((_, i) => i !== idx);
+    setImages(next);
+    try {
+      await saveHeroImages(next);
+      showToast('ok', 'Imagen eliminada correctamente.');
+    } catch (err) {
+      showToast('err', 'Error al guardar cambios: ' + err.message);
+    }
   };
 
-  const handleMove = (idx, dir) => {
+  const handleMove = async (idx, dir) => {
     const next = [...images];
     const swap = idx + dir;
     if (swap < 0 || swap >= next.length) return;
     [next[idx], next[swap]] = [next[swap], next[idx]];
     setImages(next);
+    try {
+      await saveHeroImages(next);
+      showToast('ok', 'Orden actualizado.');
+    } catch (err) {
+      showToast('err', 'Error al guardar orden: ' + err.message);
+    }
   };
 
   const handleFileUpload = async (e) => {
@@ -113,8 +133,10 @@ export default function HeroManagerView() {
           .getPublicUrl(`hero/${fileName}`);
         uploaded.push(publicUrl);
       }
-      setImages((prev) => [...prev, ...uploaded]);
-      showToast('ok', `${uploaded.length} imagen${uploaded.length > 1 ? 'es' : ''} subida${uploaded.length > 1 ? 's' : ''} correctamente.`);
+      const next = [...images, ...uploaded];
+      setImages(next);
+      await saveHeroImages(next);
+      showToast('ok', `${uploaded.length} imagen${uploaded.length > 1 ? 'es' : ''} subida${uploaded.length > 1 ? 's' : ''} y guardada${uploaded.length > 1 ? 's' : ''}.`);
     } catch (err) {
       showToast('err', 'Error al subir: ' + err.message);
     } finally {
