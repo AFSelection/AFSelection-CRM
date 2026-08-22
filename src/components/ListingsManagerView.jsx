@@ -428,8 +428,10 @@ export default function ListingsManagerView({ data, setData, refreshData }) {
 
     // Specific specs based on section
     if (formData.sectionId === 'autos') {
-      newItem.year = Number(formData.year) || 2024;
-      newItem.kilometers = Number(formData.kilometers) || 0;
+      const cleanYear = String(formData.year || '').replace(/[^\d]/g, '');
+      const cleanKm = String(formData.kilometers || '').replace(/[^\d]/g, '');
+      newItem.year = cleanYear ? parseInt(cleanYear, 10) : 2024;
+      newItem.kilometers = cleanKm ? parseInt(cleanKm, 10) : 0;
       newItem.fuel = formData.fuel;
       newItem.transmission = formData.transmission;
     } else if (formData.sectionId === 'propiedades') {
