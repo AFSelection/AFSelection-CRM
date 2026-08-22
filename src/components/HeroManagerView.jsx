@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../services/supabase';
+import { compressImage } from '../utils/compressor';
 import { ImageIcon, Plus, Trash2, MoveUp, MoveDown, Save, Loader2, CheckCircle2, AlertCircle, ExternalLink, Upload, Play, Video } from 'lucide-react';
 
 const DEFAULT_IMAGES = [
@@ -100,11 +101,12 @@ export default function HeroManagerView() {
     try {
       const uploaded = [];
       for (const file of files) {
-        const ext = file.name.split('.').pop();
+        const fileToUpload = file.type?.startsWith('image/') ? await compressImage(file) : file;
+        const ext = fileToUpload.name.split('.').pop();
         const fileName = `hero_${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
         const { error } = await supabase.storage
           .from('listings')
-          .upload(`hero/${fileName}`, file);
+          .upload(`hero/${fileName}`, fileToUpload);
         if (error) throw error;
         const { data: { publicUrl } } = supabase.storage
           .from('listings')

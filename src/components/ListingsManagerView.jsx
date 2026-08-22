@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Plus, Edit2, Trash2, MapPin, Image as ImageIcon, Search, X, ArrowUp, ArrowDown, Upload, Film, Play } from 'lucide-react';
 import { saveListingDB, deleteListingDB } from '../services/storage';
 import { supabase } from '../services/supabase';
+import { compressImage } from '../utils/compressor';
 
 // Location search with Nominatim (OpenStreetMap) geocoding
 function LocationSearch({ location, onTextChange, onSelect }) {
@@ -226,14 +227,15 @@ export default function ListingsManagerView({ data, setData, refreshData }) {
   const listings = data.listings || [];
 
   const uploadFileToStorage = async (file, itemId) => {
-    const fileExt = file.name.split('.').pop();
+    const fileToUpload = file.type?.startsWith('image/') ? await compressImage(file) : file;
+    const fileExt = fileToUpload.name.split('.').pop();
     const randomStr = Math.random().toString(36).substring(2, 9);
     const fileName = `${randomStr}_${Date.now()}.${fileExt}`;
     const filePath = `${itemId}/${fileName}`;
 
     const { data: uploadData, error } = await supabase.storage
       .from('listings')
-      .upload(filePath, file);
+      .upload(filePath, fileToUpload);
 
     if (error) {
       console.error('Error uploading file:', error);
