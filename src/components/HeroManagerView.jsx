@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../services/supabase';
-import { ImageIcon, Plus, Trash2, MoveUp, MoveDown, Save, Loader2, CheckCircle2, AlertCircle, ExternalLink, Upload } from 'lucide-react';
+import { ImageIcon, Plus, Trash2, MoveUp, MoveDown, Save, Loader2, CheckCircle2, AlertCircle, ExternalLink, Upload, Play, Video } from 'lucide-react';
 
 const DEFAULT_IMAGES = [
   'https://images.unsplash.com/photo-1614162692292-7ac56d7f7f1e?auto=format&fit=crop&w=2400&q=95'
 ];
+
+const DEFAULT_VIDEO_URL = 'https://www.instagram.com/reel/C3x9-V4xgL1/';
 
 async function loadHeroImages() {
   const { data, error } = await supabase
@@ -24,17 +26,37 @@ async function saveHeroImages(images) {
   if (error) throw error;
 }
 
+async function loadDefaultVideo() {
+  const { data, error } = await supabase
+    .from('site_settings')
+    .select('value')
+    .eq('key', 'default_video')
+    .maybeSingle();
+  if (error || !data) return DEFAULT_VIDEO_URL;
+  const val = data.value;
+  return typeof val === 'string' && val.trim() ? val.trim() : DEFAULT_VIDEO_URL;
+}
+
+async function saveDefaultVideo(url) {
+  const { error } = await supabase
+    .from('site_settings')
+    .upsert({ key: 'default_video', value: url.trim() }, { onConflict: 'key' });
+  if (error) throw error;
+}
+
 export default function HeroManagerView() {
-  const [images, setImages]       = useState([]);
-  const [newUrl, setNewUrl]       = useState('');
-  const [loading, setLoading]     = useState(true);
-  const [saving, setSaving]       = useState(false);
-  const [uploading, setUploading] = useState(false);
-  const [toast, setToast]         = useState(null); // { type: 'ok'|'err', msg }
+  const [images, setImages]           = useState([]);
+  const [defaultVideo, setDefaultVideo] = useState(DEFAULT_VIDEO_URL);
+  const [newUrl, setNewUrl]           = useState('');
+  const [loading, setLoading]         = useState(true);
+  const [saving, setSaving]           = useState(false);
+  const [uploading, setUploading]     = useState(false);
+  const [toast, setToast]             = useState(null); // { type: 'ok'|'err', msg }
 
   useEffect(() => {
-    loadHeroImages().then((imgs) => {
+    Promise.all([loadHeroImages(), loadDefaultVideo()]).then(([imgs, vid]) => {
       setImages(imgs);
+      setDefaultVideo(vid);
       setLoading(false);
     });
   }, []);
@@ -101,13 +123,14 @@ export default function HeroManagerView() {
 
   const handleSave = async () => {
     if (images.length === 0) {
-      showToast('err', 'Debe haber al menos una imagen.');
+      showToast('err', 'Debe haber al menos una imagen en el Hero.');
       return;
     }
     setSaving(true);
     try {
       await saveHeroImages(images);
-      showToast('ok', 'Imágenes del Hero guardadas correctamente.');
+      await saveDefaultVideo(defaultVideo);
+      showToast('ok', 'Configuración guardada correctamente en Supabase.');
     } catch (e) {
       showToast('err', 'Error al guardar: ' + e.message);
     } finally {
@@ -129,11 +152,10 @@ export default function HeroManagerView() {
       <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-display font-black text-primary tracking-tight">
-            IMÁGENES DEL HERO
+            HERO Y CONFIGURACIÓN DEL SITIO
           </h1>
           <p className="text-xs text-primary/50 mt-1 font-medium">
-            Administrá las fotos de fondo que se muestran en el banner principal del sitio.
-            Si hay más de una, se irán rotando automáticamente con efecto Ken Burns.
+            Administrá las imágenes del banner principal y el video / Reel de presentación por defecto.
           </p>
         </div>
         <button
@@ -160,10 +182,49 @@ export default function HeroManagerView() {
         </div>
       )}
 
-      {/* Add new image row */}
-      <div className="bg-white border border-border-light rounded-3xl p-6 space-y-4">
-        <h2 className="text-xs font-black uppercase tracking-widest text-primary/40">
-          Agregar imagen
+      {/* DEFAULT VIDEO SECTION */}
+      <div className="bg-white border border-border-light rounded-3xl p-6 space-y-4 shadow-sm">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <Video size={18} className="text-accent-red" />
+            <h2 className="text-xs font-black uppercase tracking-widest text-primary/70">
+              Video / Reel de Presentación por Defecto
+            </h2>
+          </div>
+          {defaultVideo && (
+            <a
+              href={defaultVideo}
+              target="_blank"
+              rel="noreferrer"
+              className="text-[11px] font-bold text-accent-red hover:underline flex items-center gap-1"
+            >
+              <span>Probar Link</span>
+              <ExternalLink size={12} />
+            </a>
+          )}
+        </div>
+
+        <p className="text-[11px] text-primary/45 font-medium leading-relaxed">
+          Definí la URL del **Instagram Reel** (o YouTube/Vimeo) que se mostrará por defecto en las publicaciones cuando no cargues un video personalizado.
+        </p>
+
+        <div className="flex items-center gap-3 bg-bg-canvas border border-border-light rounded-2xl px-4 py-3 focus-within:border-primary transition-colors">
+          <Play size={16} className="text-primary/30 flex-shrink-0" />
+          <input
+            type="url"
+            placeholder="https://www.instagram.com/reel/C3x9-V4xgL1/"
+            value={defaultVideo}
+            onChange={(e) => setDefaultVideo(e.target.value)}
+            className="flex-1 bg-transparent text-xs font-medium text-primary placeholder:text-primary/30 outline-none"
+          />
+        </div>
+      </div>
+
+      {/* HERO IMAGES SECTION */}
+      <div className="bg-white border border-border-light rounded-3xl p-6 space-y-4 shadow-sm">
+        <h2 className="text-xs font-black uppercase tracking-widest text-primary/70 flex items-center gap-2">
+          <ImageIcon size={16} className="text-primary/40" />
+          <span>Imágenes del Hero ({images.length})</span>
         </h2>
 
         {/* Upload from file */}
@@ -172,23 +233,22 @@ export default function HeroManagerView() {
           <label className={`inline-flex items-center gap-2 border border-border-light rounded-2xl px-5 py-3 text-xs font-black uppercase tracking-wider transition-colors cursor-pointer ${uploading ? 'opacity-50 cursor-not-allowed' : 'bg-bg-canvas hover:border-primary text-primary'}`}>
             {uploading
               ? <><Loader2 size={14} className="animate-spin" /> Subiendo…</>
-              : <><Upload size={14} /> Subir desde dispositivo</>
+              : <><Upload size={14} /> Subir fotos desde tu dispositivo</>
             }
             <input
               type="file"
               multiple
               accept="image/*"
-              disabled={uploading}
               className="hidden"
               onChange={handleFileUpload}
+              disabled={uploading}
             />
           </label>
-          <span className="ml-3 text-[10px] text-primary/30 font-medium">JPG, PNG, WEBP — recomendado 1920×1080 px</span>
         </div>
 
-        {/* Add by URL */}
+        {/* Or add by URL */}
         <div>
-          <p className="text-[11px] font-black uppercase tracking-widest text-primary/30 mb-2">Por URL externa</p>
+          <p className="text-[11px] font-black uppercase tracking-widest text-primary/30 mb-2">O pegar URL</p>
           <div className="flex gap-3">
             <div className="flex-1 flex items-center gap-3 bg-bg-canvas border border-border-light rounded-2xl px-4 py-3 focus-within:border-primary transition-colors">
               <ImageIcon size={16} className="text-primary/30 flex-shrink-0" />
@@ -198,7 +258,7 @@ export default function HeroManagerView() {
                 value={newUrl}
                 onChange={(e) => setNewUrl(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
-                className="flex-1 bg-transparent text-sm text-primary placeholder:text-primary/30 outline-none"
+                className="flex-1 bg-transparent text-xs text-primary placeholder:text-primary/30 outline-none"
               />
             </div>
             <button
@@ -213,9 +273,9 @@ export default function HeroManagerView() {
       </div>
 
       {/* Image list */}
-      <div className="bg-white border border-border-light rounded-3xl p-6 space-y-4">
+      <div className="bg-white border border-border-light rounded-3xl p-6 space-y-4 shadow-sm">
         <h2 className="text-xs font-black uppercase tracking-widest text-primary/40">
-          Imágenes activas — {images.length} {images.length === 1 ? 'imagen' : 'imágenes'}
+          Fotos activas del Hero
         </h2>
 
         {images.length === 0 ? (

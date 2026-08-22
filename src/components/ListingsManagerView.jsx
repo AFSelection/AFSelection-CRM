@@ -247,11 +247,20 @@ export default function ListingsManagerView({ data, setData, refreshData }) {
     return publicUrl;
   };
 
-  const handleOpenAdd = () => {
+  const handleOpenAdd = async () => {
     tempIdRef.current = `item-${Date.now()}`;
     setEditingItem(null);
     setUploadedImages([]);
-    setUploadedVideos(['https://www.instagram.com/reel/C3x9-V4xgL1/']);
+
+    let defaultVideo = 'https://www.instagram.com/reel/C3x9-V4xgL1/';
+    try {
+      const { data } = await supabase.from('site_settings').select('value').eq('key', 'default_video').maybeSingle();
+      if (data?.value && typeof data.value === 'string' && data.value.trim()) {
+        defaultVideo = data.value.trim();
+      }
+    } catch {}
+
+    setUploadedVideos([defaultVideo]);
     setFormData({
       title: '',
       subtitle: '',
