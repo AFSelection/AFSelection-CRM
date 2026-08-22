@@ -251,7 +251,7 @@ export default function ListingsManagerView({ data, setData, refreshData }) {
     tempIdRef.current = `item-${Date.now()}`;
     setEditingItem(null);
     setUploadedImages([]);
-    setUploadedVideos([]);
+    setUploadedVideos(['https://www.instagram.com/reel/C3x9-V4xgL1/']);
     setFormData({
       title: '',
       subtitle: '',
@@ -1098,10 +1098,10 @@ export default function ListingsManagerView({ data, setData, refreshData }) {
             <div className="bg-white border border-border-light rounded-3xl p-6 sm:p-8 space-y-6 shadow-sm">
               <div>
                 <h3 className="text-sm font-extrabold tracking-widest text-primary/70 uppercase">
-                  Video de Presentación
+                  Video / Reel de Presentación (Instagram / YouTube)
                 </h3>
                 <p className="text-[10px] text-primary/45 mt-0.5">
-                  Se reproducirá al final del carrusel de fotos.
+                  Podés pegar un link de Instagram Reel, YouTube o subir un MP4. Se incluirá un Reel por defecto si se requiere.
                 </p>
               </div>
 
@@ -1110,7 +1110,7 @@ export default function ListingsManagerView({ data, setData, refreshData }) {
                   <input
                     type="text"
                     className="flex-1 bg-bg-canvas border border-border-light focus:border-primary text-xs text-primary rounded-xl py-3 px-4 outline-none"
-                    placeholder="Pegar link de YouTube..."
+                    placeholder="Pegar link de Instagram Reel (https://www.instagram.com/reel/...)..."
                     value={videoLinkInput}
                     onChange={(e) => setVideoLinkInput(e.target.value)}
                   />
