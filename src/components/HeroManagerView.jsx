@@ -70,6 +70,15 @@ export default function HeroManagerView() {
   const handleDefaultVideoFileUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
+
+    const maxMb = 50;
+    if (file.size > maxMb * 1024 * 1024) {
+      const sizeMb = (file.size / (1024 * 1024)).toFixed(1);
+      showToast('err', `El video pesa ${sizeMb}MB (máximo permitido: ${maxMb}MB). Por favor utilizá un archivo más liviano o el link de Instagram Reel.`);
+      e.target.value = '';
+      return;
+    }
+
     setVideoUploading(true);
     try {
       const ext = file.name.split('.').pop();
@@ -82,7 +91,11 @@ export default function HeroManagerView() {
       await saveDefaultMediaSettings(defaultVideo, publicUrl);
       showToast('ok', 'Archivo de video por defecto subido y guardado.');
     } catch (err) {
-      showToast('err', 'Error al subir video por defecto: ' + err.message);
+      let msg = err.message || '';
+      if (msg.includes('exceeded') || msg.includes('maximum allowed size') || msg.includes('payload too large')) {
+        msg = 'El archivo supera el tamaño máximo de 50MB. Te recomendamos comprimirlo o usar el link de Instagram Reel.';
+      }
+      showToast('err', 'Error al subir video por defecto: ' + msg);
     } finally {
       setVideoUploading(false);
       e.target.value = '';

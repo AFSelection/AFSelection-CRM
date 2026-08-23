@@ -344,15 +344,28 @@ export default function ListingsManagerView({ data, setData, refreshData }) {
     const file = e.target.files[0];
     if (!file) return;
 
+    const maxMb = 50;
+    if (file.size > maxMb * 1024 * 1024) {
+      const sizeMb = (file.size / (1024 * 1024)).toFixed(1);
+      alert(`El video pesa ${sizeMb}MB. El límite máximo de almacenamiento en la nube es de ${maxMb}MB.\n\nPor favor seleccioná un archivo más liviano o utilizá el link de Instagram Reel.`);
+      e.target.value = '';
+      return;
+    }
+
     setUploadProgress('Subiendo video...');
     try {
       const url = await uploadFileToStorage(file, tempIdRef.current);
       setUploadedVideos((prev) => [...prev, url]);
     } catch (err) {
-      alert('Error al subir el video.');
+      let msg = err.message || '';
+      if (msg.includes('exceeded') || msg.includes('maximum allowed size') || msg.includes('payload too large')) {
+        msg = 'El video supera el límite de 50MB. Te recomendamos comprimirlo antes de subirlo o usar el link de Instagram Reel.';
+      }
+      alert('Error al subir el video: ' + msg);
       console.error(err);
     } finally {
       setUploadProgress(null);
+      e.target.value = '';
     }
   };
 
