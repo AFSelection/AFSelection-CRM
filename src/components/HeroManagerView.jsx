@@ -27,37 +27,37 @@ async function saveHeroImages(images) {
   if (error) throw error;
 }
 
-async function loadDefaultVideo() {
-  const { data, error } = await supabase
-    .from('site_settings')
-    .select('value')
-    .eq('key', 'default_video')
-    .maybeSingle();
-  if (error || !data) return DEFAULT_VIDEO_URL;
-  const val = data.value;
-  return typeof val === 'string' && val.trim() ? val.trim() : DEFAULT_VIDEO_URL;
+async function loadDefaultMediaSettings() {
+  const { data: reelData } = await supabase.from('site_settings').select('value').eq('key', 'default_video').maybeSingle();
+  const { data: fileData } = await supabase.from('site_settings').select('value').eq('key', 'default_video_file').maybeSingle();
+
+  return {
+    reelUrl: typeof reelData?.value === 'string' ? reelData.value : DEFAULT_VIDEO_URL,
+    fileUrl: typeof fileData?.value === 'string' ? fileData.value : ''
+  };
 }
 
-async function saveDefaultVideo(url) {
-  const { error } = await supabase
-    .from('site_settings')
-    .upsert({ key: 'default_video', value: url.trim() }, { onConflict: 'key' });
-  if (error) throw error;
+async function saveDefaultMediaSettings(reelUrl, fileUrl) {
+  await supabase.from('site_settings').upsert({ key: 'default_video', value: (reelUrl || '').trim() }, { onConflict: 'key' });
+  await supabase.from('site_settings').upsert({ key: 'default_video_file', value: (fileUrl || '').trim() }, { onConflict: 'key' });
 }
 
 export default function HeroManagerView() {
-  const [images, setImages]           = useState([]);
-  const [defaultVideo, setDefaultVideo] = useState(DEFAULT_VIDEO_URL);
-  const [newUrl, setNewUrl]           = useState('');
-  const [loading, setLoading]         = useState(true);
-  const [saving, setSaving]           = useState(false);
-  const [uploading, setUploading]     = useState(false);
-  const [toast, setToast]             = useState(null); // { type: 'ok'|'err', msg }
+  const [images, setImages]             = useState([]);
+  const [defaultVideo, setDefaultVideo]   = useState(DEFAULT_VIDEO_URL);
+  const [defaultVideoFile, setDefaultVideoFile] = useState('');
+  const [newUrl, setNewUrl]             = useState('');
+  const [loading, setLoading]           = useState(true);
+  const [saving, setSaving]             = useState(false);
+  const [uploading, setUploading]       = useState(false);
+  const [videoUploading, setVideoUploading] = useState(false);
+  const [toast, setToast]               = useState(null); // { type: 'ok'|'err', msg }
 
   useEffect(() => {
-    Promise.all([loadHeroImages(), loadDefaultVideo()]).then(([imgs, vid]) => {
+    Promise.all([loadHeroImages(), loadDefaultMediaSettings()]).then(([imgs, media]) => {
       setImages(imgs);
-      setDefaultVideo(vid);
+      setDefaultVideo(media.reelUrl);
+      setDefaultVideoFile(media.fileUrl);
       setLoading(false);
     });
   }, []);
@@ -65,6 +65,28 @@ export default function HeroManagerView() {
   const showToast = (type, msg) => {
     setToast({ type, msg });
     setTimeout(() => setToast(null), 3500);
+  };
+
+  const handleDefaultVideoFileUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setVideoUploading(true);
+    try {
+      const ext = file.name.split('.').pop();
+      const fileName = `default_vid_${Date.now()}.${ext}`;
+      const filePath = `site/${fileName}`;
+      const { error } = await supabase.storage.from('listings').upload(filePath, file);
+      if (error) throw error;
+      const { data: { publicUrl } } = supabase.storage.from('listings').getPublicUrl(filePath);
+      setDefaultVideoFile(publicUrl);
+      await saveDefaultMediaSettings(defaultVideo, publicUrl);
+      showToast('ok', 'Archivo de video por defecto subido y guardado.');
+    } catch (err) {
+      showToast('err', 'Error al subir video por defecto: ' + err.message);
+    } finally {
+      setVideoUploading(false);
+      e.target.value = '';
+    }
   };
 
   const handleAdd = async () => {
@@ -153,7 +175,7 @@ export default function HeroManagerView() {
     setSaving(true);
     try {
       await saveHeroImages(images);
-      await saveDefaultVideo(defaultVideo);
+      await saveDefaultMediaSettings(defaultVideo, defaultVideoFile);
       showToast('ok', 'Configuración guardada correctamente en Supabase.');
     } catch (e) {
       showToast('err', 'Error al guardar: ' + e.message);
@@ -179,7 +201,7 @@ export default function HeroManagerView() {
             HERO Y CONFIGURACIÓN DEL SITIO
           </h1>
           <p className="text-xs text-primary/50 mt-1 font-medium">
-            Administrá las imágenes del banner principal y el video / Reel de presentación por defecto.
+            Administrá las imágenes del banner principal y el video MP4 / Reel por defecto del sitio.
           </p>
         </div>
         <button
@@ -207,40 +229,75 @@ export default function HeroManagerView() {
       )}
 
       {/* DEFAULT VIDEO SECTION */}
-      <div className="bg-white border border-border-light rounded-3xl p-6 space-y-4 shadow-sm">
+      <div className="bg-white border border-border-light rounded-3xl p-6 space-y-5 shadow-sm">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <Video size={18} className="text-accent-red" />
             <h2 className="text-xs font-black uppercase tracking-widest text-primary/70">
-              Video / Reel de Presentación por Defecto
+              Video / Reel de Presentación por Defecto del Sitio
             </h2>
           </div>
-          {defaultVideo && (
-            <a
-              href={defaultVideo}
-              target="_blank"
-              rel="noreferrer"
-              className="text-[11px] font-bold text-accent-red hover:underline flex items-center gap-1"
-            >
-              <span>Probar Link</span>
-              <ExternalLink size={12} />
-            </a>
-          )}
         </div>
 
         <p className="text-[11px] text-primary/45 font-medium leading-relaxed">
-          Definí la URL del **Instagram Reel** (o YouTube/Vimeo) que se mostrará por defecto en las publicaciones cuando no cargues un video personalizado.
+          Definí el video MP4 nativo y/o el link de Instagram Reel que se mostrará por defecto en las publicaciones que no tengan un video propio cargado.
         </p>
 
-        <div className="flex items-center gap-3 bg-bg-canvas border border-border-light rounded-2xl px-4 py-3 focus-within:border-primary transition-colors">
-          <Play size={16} className="text-primary/30 flex-shrink-0" />
-          <input
-            type="url"
-            placeholder="https://www.instagram.com/reel/C3x9-V4xgL1/"
-            value={defaultVideo}
-            onChange={(e) => setDefaultVideo(e.target.value)}
-            className="flex-1 bg-transparent text-xs font-medium text-primary placeholder:text-primary/30 outline-none"
-          />
+        {/* 1. Default MP4 File Upload */}
+        <div className="space-y-2">
+          <label className="text-[10px] font-black uppercase tracking-widest text-primary/50 block">
+            1. Archivo de Video MP4 por Defecto (Nativo para la Web)
+          </label>
+
+          <label className="w-full flex items-center justify-center gap-2.5 bg-primary text-white text-xs font-black uppercase tracking-wider py-3.5 px-5 rounded-2xl cursor-pointer hover:bg-primary/90 transition-colors shadow-sm">
+            <Upload size={16} />
+            <span>{videoUploading ? 'Subiendo video...' : 'Subir Archivo de Video MP4 por Defecto'}</span>
+            <input
+              type="file"
+              accept="video/mp4,video/mov,video/*"
+              className="hidden"
+              onChange={handleDefaultVideoFileUpload}
+              disabled={videoUploading}
+            />
+          </label>
+
+          {defaultVideoFile && (
+            <div className="flex items-center justify-between gap-2 bg-emerald-50 border border-emerald-200 rounded-2xl px-4 py-2.5 text-xs text-emerald-800 font-semibold">
+              <span className="truncate">✓ MP4 Cargado: {defaultVideoFile}</span>
+              <a href={defaultVideoFile} target="_blank" rel="noreferrer" className="text-emerald-700 underline font-bold flex-shrink-0">
+                Probar MP4
+              </a>
+            </div>
+          )}
+        </div>
+
+        {/* 2. Default Instagram Reel URL */}
+        <div className="space-y-2 pt-2">
+          <label className="text-[10px] font-black uppercase tracking-widest text-primary/50 block">
+            2. Link de Instagram Reel por Defecto
+          </label>
+
+          <div className="flex items-center gap-3 bg-bg-canvas border border-border-light rounded-2xl px-4 py-3 focus-within:border-primary transition-colors">
+            <Play size={16} className="text-primary/30 flex-shrink-0" />
+            <input
+              type="url"
+              placeholder="https://www.instagram.com/reel/C3x9-V4xgL1/"
+              value={defaultVideo}
+              onChange={(e) => setDefaultVideo(e.target.value)}
+              className="flex-1 bg-transparent text-xs font-medium text-primary placeholder:text-primary/30 outline-none"
+            />
+            {defaultVideo && (
+              <a
+                href={defaultVideo}
+                target="_blank"
+                rel="noreferrer"
+                className="text-[11px] font-bold text-accent-red hover:underline flex items-center gap-1 flex-shrink-0"
+              >
+                <span>Probar Reel</span>
+                <ExternalLink size={12} />
+              </a>
+            )}
+          </div>
         </div>
       </div>
 

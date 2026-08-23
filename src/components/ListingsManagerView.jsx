@@ -254,15 +254,7 @@ export default function ListingsManagerView({ data, setData, refreshData }) {
     setEditingItem(null);
     setUploadedImages([]);
 
-    let defaultVideo = 'https://www.instagram.com/reel/C3x9-V4xgL1/';
-    try {
-      const { data } = await supabase.from('site_settings').select('value').eq('key', 'default_video').maybeSingle();
-      if (data?.value && typeof data.value === 'string' && data.value.trim()) {
-        defaultVideo = data.value.trim();
-      }
-    } catch {}
-
-    setUploadedVideos([defaultVideo]);
+    setUploadedVideos([]);
     setFormData({
       title: '',
       subtitle: '',
@@ -1209,7 +1201,9 @@ export default function ListingsManagerView({ data, setData, refreshData }) {
                   })}
                 </div>
               ) : (
-                <div className="text-[10px] font-semibold text-primary/30 italic">Sin videos ni Reels cargados.</div>
+                <div className="bg-amber-50/60 border border-amber-200/60 rounded-2xl p-3.5 text-[11px] font-medium text-amber-900/80 leading-relaxed">
+                  💡 <b>Video por defecto:</b> Si no cargás un video personalizado para esta publicación, en la web se mostrará automáticamente el Video MP4 y Reel definidos en <i>Hero y Configuración del Sitio</i>.
+                </div>
               )}
             </div>
 
