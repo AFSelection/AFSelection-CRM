@@ -1108,40 +1108,24 @@ export default function ListingsManagerView({ data, setData, refreshData }) {
             </div>
 
             {/* Videos Section */}
-            <div className="bg-white border border-border-light rounded-3xl p-6 sm:p-8 space-y-6 shadow-sm">
+            <div className="bg-white border border-border-light rounded-3xl p-6 sm:p-8 space-y-5 shadow-sm">
               <div>
                 <h3 className="text-sm font-extrabold tracking-widest text-primary/70 uppercase">
-                  Video / Reel de Presentación (Instagram / YouTube)
+                  Videos y Reels de Presentación
                 </h3>
-                <p className="text-[10px] text-primary/45 mt-0.5">
-                  Podés pegar un link de Instagram Reel, YouTube o subir un MP4. Se incluirá un Reel por defecto si se requiere.
+                <p className="text-[10px] text-primary/45 mt-0.5 leading-relaxed">
+                  Podés subir un archivo de video (MP4 / MOV) para reproducción nativa en la web, y/o enlazar un Reel de Instagram.
                 </p>
               </div>
 
-              <div className="flex flex-col sm:flex-row gap-3">
-                <div className="flex-1 flex gap-2">
-                  <input
-                    type="text"
-                    className="flex-1 bg-bg-canvas border border-border-light focus:border-primary text-xs text-primary rounded-xl py-3 px-4 outline-none"
-                    placeholder="Pegar link de Instagram Reel (https://www.instagram.com/reel/...)..."
-                    value={videoLinkInput}
-                    onChange={(e) => setVideoLinkInput(e.target.value)}
-                  />
-                  <button
-                    type="button"
-                    onClick={handleAddVideoLink}
-                    className="bg-primary hover:bg-primary-hover text-white text-xs font-bold uppercase tracking-wider px-4 rounded-xl cursor-pointer"
-                  >
-                    Enlazar
-                  </button>
-                </div>
-
-                <label className="inline-flex items-center justify-center gap-2 bg-primary/5 hover:bg-primary/10 text-primary border border-primary/20 text-xs font-bold uppercase tracking-wider py-3.5 px-4.5 rounded-xl cursor-pointer transition-colors">
-                  <Upload className="w-4 h-4" />
-                  <span>MP4</span>
+              {/* Upload MP4 File Button (Big & Prominent) */}
+              <div>
+                <label className="w-full flex items-center justify-center gap-2.5 bg-primary text-white border border-primary text-xs font-black uppercase tracking-wider py-3.5 px-5 rounded-2xl cursor-pointer hover:bg-primary/90 transition-colors shadow-sm">
+                  <Film className="w-4 h-4" />
+                  <span>Subir Archivo de Video desde Dispositivo (MP4 / MOV)</span>
                   <input
                     type="file"
-                    accept="video/*"
+                    accept="video/mp4,video/mov,video/webm,video/*"
                     className="hidden"
                     onChange={handleVideoUploadChange}
                     disabled={loading || !!uploadProgress}
@@ -1149,29 +1133,83 @@ export default function ListingsManagerView({ data, setData, refreshData }) {
                 </label>
               </div>
 
+              {/* Link Instagram Reel input */}
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-extrabold tracking-widest text-primary/40 uppercase block">
+                  O pegar Link de Instagram Reel / YouTube
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    className="flex-1 bg-bg-canvas border border-border-light focus:border-primary text-xs text-primary rounded-xl py-3 px-4 outline-none"
+                    placeholder="https://www.instagram.com/reel/C3x9-V4xgL1/"
+                    value={videoLinkInput}
+                    onChange={(e) => setVideoLinkInput(e.target.value)}
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAddVideoLink}
+                    className="bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 text-xs font-bold uppercase tracking-wider px-4 rounded-xl cursor-pointer"
+                  >
+                    Enlazar
+                  </button>
+                </div>
+              </div>
+
+              {/* Upload Progress */}
+              {uploadProgress && uploadProgress.includes('video') && (
+                <div className="text-xs font-bold text-accent-emerald animate-pulse flex items-center gap-1.5">
+                  <div className="w-3.5 h-3.5 border-2 border-accent-emerald/20 border-t-accent-emerald rounded-full animate-spin"></div>
+                  <span>{uploadProgress} (Guardando en la nube Supabase...)</span>
+                </div>
+              )}
+
+              {/* Video items list */}
               {uploadedVideos.length > 0 ? (
                 <div className="space-y-2">
-                  {uploadedVideos.map((vidUrl, index) => (
-                    <div
-                      key={index}
-                      className="bg-bg-canvas/40 border border-border-light rounded-2xl p-4 flex items-center justify-between gap-3 text-xs"
-                    >
-                      <div className="flex items-center gap-2.5 truncate font-semibold text-primary/75">
-                        <Play className="w-4 h-4 text-accent-red flex-shrink-0" />
-                        <span className="truncate">{vidUrl}</span>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => removeVideo(index)}
-                        className="text-primary/30 hover:text-accent-red p-1.5 rounded-lg hover:bg-red-50 cursor-pointer flex-shrink-0"
+                  {uploadedVideos.map((vidUrl, index) => {
+                    const isMp4 = vidUrl.includes('.mp4') || vidUrl.includes('.mov') || vidUrl.includes('supabase.co');
+                    const isIg = vidUrl.includes('instagram.com') || vidUrl.includes('instagr.am');
+                    return (
+                      <div
+                        key={index}
+                        className="bg-bg-canvas/40 border border-border-light rounded-2xl p-3.5 flex items-center justify-between gap-3 text-xs"
                       >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  ))}
+                        <div className="flex items-center gap-2.5 truncate font-semibold text-primary/75">
+                          {isMp4 ? (
+                            <span className="bg-emerald-100 text-emerald-800 text-[9px] font-black uppercase px-2 py-0.5 rounded flex-shrink-0">MP4 NATIVO</span>
+                          ) : isIg ? (
+                            <span className="bg-pink-100 text-pink-700 text-[9px] font-black uppercase px-2 py-0.5 rounded flex-shrink-0">INSTAGRAM REEL</span>
+                          ) : (
+                            <Play className="w-4 h-4 text-accent-red flex-shrink-0" />
+                          )}
+                          <span className="truncate">{vidUrl}</span>
+                        </div>
+                        <div className="flex items-center gap-1 flex-shrink-0">
+                          <a
+                            href={vidUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-primary/40 hover:text-primary p-1.5 rounded-lg hover:bg-primary/5 cursor-pointer"
+                            title="Probar reproducción"
+                          >
+                            <ExternalLink className="w-3.5 h-3.5" />
+                          </a>
+                          <button
+                            type="button"
+                            onClick={() => removeVideo(index)}
+                            className="text-primary/30 hover:text-accent-red p-1.5 rounded-lg hover:bg-red-50 cursor-pointer"
+                            title="Eliminar"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               ) : (
-                <div className="text-[10px] font-semibold text-primary/30 italic">Sin video enlazado.</div>
+                <div className="text-[10px] font-semibold text-primary/30 italic">Sin videos ni Reels cargados.</div>
               )}
             </div>
 
