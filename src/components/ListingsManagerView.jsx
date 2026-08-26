@@ -248,6 +248,7 @@ export default function ListingsManagerView({ data, setData, refreshData }) {
     title: '',
     subtitle: '',
     price: '',
+    discountPrice: '',
     currency: 'USD',
     sectionId: 'autos',
     category: '',
@@ -308,6 +309,7 @@ export default function ListingsManagerView({ data, setData, refreshData }) {
       title: '',
       subtitle: '',
       price: '',
+      discountPrice: '',
       currency: 'USD',
       sectionId: sections[0]?.id || 'autos',
       category: sections[0]?.categories?.[0] || '',
@@ -339,10 +341,14 @@ export default function ListingsManagerView({ data, setData, refreshData }) {
     setEditingItem(item);
     setUploadedImages(item.images || []);
     setUploadedVideos(item.videos || []);
+
+    const isCurrentlyDiscounted = Boolean(item.isOffer) && item.oldPrice && Number(item.oldPrice) > Number(item.price);
+
     setFormData({
       title: item.title || '',
       subtitle: item.subtitle || '',
-      price: item.price || '',
+      price: isCurrentlyDiscounted ? String(item.oldPrice) : (item.price !== undefined ? String(item.price) : ''),
+      discountPrice: isCurrentlyDiscounted ? String(item.price) : '',
       currency: item.currency || 'USD',
       sectionId: item.sectionId || 'autos',
       category: item.category || '',
@@ -361,8 +367,8 @@ export default function ListingsManagerView({ data, setData, refreshData }) {
       garages: item.garages || '',
       featured: item.featured || false,
       description: item.description || '',
-      isOffer: item.isOffer || false,
-      oldPrice: item.oldPrice !== undefined && item.oldPrice !== null ? item.oldPrice : '',
+      isOffer: isCurrentlyDiscounted,
+      oldPrice: item.oldPrice !== undefined && item.oldPrice !== null ? String(item.oldPrice) : '',
       operationType: item.operationType || 'Venta',
       showAddress: item.showAddress ?? true
     });
@@ -469,11 +475,15 @@ export default function ListingsManagerView({ data, setData, refreshData }) {
     if (!formData.title || !formData.price) return;
     setLoading(true);
 
+    const isDiscountActive = Boolean(formData.isOffer) && formData.discountPrice && Number(formData.discountPrice) < Number(formData.price);
+
     const newItem = {
       id: tempIdRef.current,
       title: formData.title,
       subtitle: formData.subtitle,
-      price: Number(formData.price),
+      price: isDiscountActive ? Number(formData.discountPrice) : Number(formData.price),
+      oldPrice: isDiscountActive ? Number(formData.price) : null,
+      isOffer: isDiscountActive,
       currency: formData.currency,
       sectionId: formData.sectionId,
       category: formData.category,
@@ -483,8 +493,6 @@ export default function ListingsManagerView({ data, setData, refreshData }) {
       description: formData.description,
       images: uploadedImages,
       videos: uploadedVideos,
-      isOffer: formData.isOffer,
-      oldPrice: formData.oldPrice ? Number(formData.oldPrice) : null,
       operationType: formData.operationType || 'Venta',
       showAddress: formData.showAddress !== false
     };
@@ -796,12 +804,12 @@ export default function ListingsManagerView({ data, setData, refreshData }) {
               {/* Price, Currency, Category */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-extrabold tracking-widest text-primary/40 uppercase block">Precio *</label>
+                  <label className="text-[10px] font-extrabold tracking-widest text-primary/40 uppercase block">Precio Original / Base *</label>
                   <input
                     type="number"
                     required
                     className="w-full bg-bg-canvas border border-border-light focus:border-primary focus:bg-white text-xs text-primary rounded-xl py-3.5 px-4 outline-none transition-colors"
-                    placeholder="Ej: 485000"
+                    placeholder="Ej: 100000"
                     value={formData.price}
                     onChange={(e) => setFormData({ ...formData, price: e.target.value })}
                   />
@@ -821,35 +829,35 @@ export default function ListingsManagerView({ data, setData, refreshData }) {
               </div>
 
               {/* Price Drop (Offer) Section */}
-              <div className="p-4.5 bg-amber-500/5 border border-amber-500/10 rounded-2xl space-y-4">
+              <div className="p-4.5 bg-emerald-500/5 border border-emerald-500/20 rounded-2xl space-y-4">
                 <div className="flex items-center gap-2.5">
                   <input
                     type="checkbox"
                     id="isOffer"
-                    className="w-4.5 h-4.5 accent-amber-500 cursor-pointer"
+                    className="w-4.5 h-4.5 accent-emerald-600 cursor-pointer"
                     checked={formData.isOffer}
                     onChange={(e) => setFormData({ ...formData, isOffer: e.target.checked })}
                   />
                   <label htmlFor="isOffer" className="text-xs font-bold text-primary/80 uppercase cursor-pointer select-none tracking-wide">
-                    ¿Esta unidad Bajó de Precio / Está en Oferta?
+                    ¿Esta unidad Bajó de Precio / Está en Descuento?
                   </label>
                 </div>
 
                 {formData.isOffer && (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-1 duration-200">
                     <div className="space-y-1.5">
-                      <label className="text-[10px] font-extrabold tracking-widest text-primary/40 uppercase block">Precio Anterior (Antes) *</label>
+                      <label className="text-[10px] font-extrabold tracking-widest text-emerald-600 uppercase block">Nuevo Precio con Descuento *</label>
                       <input
                         type="number"
                         required
-                        className="w-full bg-white border border-border-light focus:border-primary text-xs text-primary rounded-xl py-3.5 px-4 outline-none"
-                        placeholder="Ej: 210000"
-                        value={formData.oldPrice}
-                        onChange={(e) => setFormData({ ...formData, oldPrice: e.target.value })}
+                        className="w-full bg-white border border-emerald-300 focus:border-emerald-600 text-xs text-primary font-bold rounded-xl py-3.5 px-4 outline-none"
+                        placeholder="Ej: 85000"
+                        value={formData.discountPrice}
+                        onChange={(e) => setFormData({ ...formData, discountPrice: e.target.value })}
                       />
                     </div>
-                    <div className="flex items-end pb-3 text-xs text-primary/45 font-semibold italic">
-                      Se mostrará la etiqueta de descuento automática en la portada del cliente.
+                    <div className="flex items-center pb-1 text-xs text-primary/60 font-semibold leading-relaxed">
+                      El producto se venderá a este nuevo precio con descuento, mostrando el precio original ({formData.currency} {Number(formData.price || 0).toLocaleString()}) tachado con la insignia % DESCUENTO. Al destildar la opción, volverá automáticamente al precio original.
                     </div>
                   </div>
                 )}
@@ -1426,7 +1434,7 @@ export default function ListingsManagerView({ data, setData, refreshData }) {
                   </span>
 
                   <div className="flex items-center gap-1.5">
-                    {(item.isOffer || (item.oldPrice && Number(item.oldPrice) > Number(item.price))) && (
+                    {(Boolean(item.isOffer) && item.oldPrice && Number(item.oldPrice) > Number(item.price)) && (
                       <span className="bg-emerald-500 text-white text-[9px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full shadow-md flex items-center gap-1" title="Unidad en Descuento">
                         <Percent size={11} className="stroke-[3]" />
                         <span>Descuento</span>
