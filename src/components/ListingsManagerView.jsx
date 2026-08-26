@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Plus, Edit2, Trash2, MapPin, Image as ImageIcon, Search, X, ArrowUp, ArrowDown, Upload, Film, Play } from 'lucide-react';
+import { Plus, Edit2, Trash2, MapPin, Image as ImageIcon, Search, X, ArrowUp, ArrowDown, Upload, Film, Play, Percent } from 'lucide-react';
 import { saveListingDB, deleteListingDB } from '../services/storage';
 import { supabase } from '../services/supabase';
 import { compressImage } from '../utils/compressor';
@@ -1420,16 +1420,25 @@ export default function ListingsManagerView({ data, setData, refreshData }) {
                 />
                 
                 {/* Badges Overlay */}
-                <div className="absolute top-4 left-4 right-4 flex items-center justify-between">
+                <div className="absolute top-4 left-4 right-4 flex items-center justify-between pointer-events-none">
                   <span className="bg-primary/80 backdrop-blur-md text-white text-[9px] font-extrabold uppercase tracking-wider px-3 py-1 rounded-full">
                     {item.category || item.sectionId}
                   </span>
 
-                  {item.featured && (
-                    <span className="bg-amber-500 text-white text-[9px] font-extrabold uppercase tracking-wider px-3 py-1 rounded-full shadow-sm">
-                      ★ Destacada
-                    </span>
-                  )}
+                  <div className="flex items-center gap-1.5">
+                    {(item.isOffer || (item.oldPrice && Number(item.oldPrice) > Number(item.price))) && (
+                      <span className="bg-emerald-500 text-white text-[9px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full shadow-md flex items-center gap-1" title="Unidad en Descuento">
+                        <Percent size={11} className="stroke-[3]" />
+                        <span>Descuento</span>
+                      </span>
+                    )}
+
+                    {item.featured && (
+                      <span className="bg-amber-500 text-white text-[9px] font-extrabold uppercase tracking-wider px-3 py-1 rounded-full shadow-sm">
+                        ★ Destacada
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
 
