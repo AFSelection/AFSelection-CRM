@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Inbox, Phone, Mail, MessageSquare, Trash2, Clock } from 'lucide-react';
 import { saveLeadDB, deleteLeadDB } from '../services/storage';
+import ConfirmModal from './ConfirmModal';
 
 function CustomSelect({ value, onChange, options }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -49,6 +50,20 @@ function CustomSelect({ value, onChange, options }) {
           ))}
         </div>
       )}
+
+      {/* Custom Confirm & Notice Modal */}
+      <ConfirmModal
+        isOpen={modalState.isOpen}
+        title={modalState.title}
+        message={modalState.message}
+        variant={modalState.variant}
+        confirmText={modalState.confirmText}
+        cancelText={modalState.cancelText}
+        isNotice={modalState.isNotice}
+        loading={modalState.loading}
+        onConfirm={modalState.onConfirmHandler}
+        onCancel={() => setModalState((prev) => ({ ...prev, isOpen: false }))}
+      />
     </div>
   );
 }
@@ -56,6 +71,53 @@ function CustomSelect({ value, onChange, options }) {
 export default function LeadsManagerView({ data, setData, refreshData }) {
   const [statusFilter, setStatusFilter] = useState('all');
   const [loadingId, setLoadingId] = useState(null);
+
+  const [modalState, setModalState] = useState({
+    isOpen: false,
+    title: '',
+    message: '',
+    variant: 'danger',
+    confirmText: 'Confirmar',
+    cancelText: 'Cancelar',
+    isNotice: false,
+    loading: false,
+    onConfirmHandler: null
+  });
+
+  const showConfirmModal = ({ title, message, variant = 'danger', confirmText = 'Eliminar', onConfirm }) => {
+    setModalState({
+      isOpen: true,
+      title,
+      message,
+      variant,
+      confirmText,
+      cancelText: 'Cancelar',
+      isNotice: false,
+      loading: false,
+      onConfirmHandler: async () => {
+        setModalState((prev) => ({ ...prev, loading: true }));
+        try {
+          await onConfirm();
+        } finally {
+          setModalState((prev) => ({ ...prev, isOpen: false, loading: false }));
+        }
+      }
+    });
+  };
+
+  const showNoticeModal = ({ title = 'Atención', message, variant = 'info' }) => {
+    setModalState({
+      isOpen: true,
+      title,
+      message,
+      variant,
+      confirmText: 'Entendido',
+      cancelText: '',
+      isNotice: true,
+      loading: false,
+      onConfirmHandler: () => setModalState((prev) => ({ ...prev, isOpen: false }))
+    });
+  };
 
   const leads = data.leads || [];
   const listings = data.listings || [];
@@ -70,25 +132,36 @@ export default function LeadsManagerView({ data, setData, refreshData }) {
       await saveLeadDB(updatedLead);
       await refreshData();
     } catch (err) {
-      alert('Error al actualizar el estado del lead.');
+      showNoticeModal({
+        title: 'Error',
+        message: 'Ocurrió un error al actualizar el estado del lead.',
+        variant: 'danger'
+      });
       console.error(err);
     } finally {
       setLoadingId(null);
     }
   };
 
-  const handleDeleteLead = async (leadId) => {
-    if (!window.confirm('¿Estás seguro de eliminar este registro de consulta?')) return;
-    setLoadingId(leadId);
-    try {
-      await deleteLeadDB(leadId);
-      await refreshData();
-    } catch (err) {
-      alert('Error al eliminar el lead.');
-      console.error(err);
-    } finally {
-      setLoadingId(null);
-    }
+  const handleDeleteLead = (leadId) => {
+    showConfirmModal({
+      title: '¿Eliminar Consulta?',
+      message: '¿Estás seguro de eliminar este registro de consulta? Esta acción no se puede deshacer.',
+      variant: 'danger',
+      confirmText: 'Eliminar Consulta',
+      onConfirm: async () => {
+        try {
+          await deleteLeadDB(leadId);
+          await refreshData();
+        } catch (err) {
+          showNoticeModal({
+            title: 'Error',
+            message: 'Ocurrió un error al eliminar el lead.',
+            variant: 'danger'
+          });
+        }
+      }
+    });
   };
 
   const getListingTitle = (listingId) => {

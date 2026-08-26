@@ -3,6 +3,7 @@ import { Plus, Edit2, Trash2, MapPin, Image as ImageIcon, Search, X, ArrowUp, Ar
 import { saveListingDB, deleteListingDB } from '../services/storage';
 import { supabase } from '../services/supabase';
 import { compressImage } from '../utils/compressor';
+import ConfirmModal from './ConfirmModal';
 
 // Location search with Nominatim (OpenStreetMap) geocoding
 function LocationSearch({ location, onTextChange, onSelect }) {
@@ -186,6 +187,54 @@ export default function ListingsManagerView({ data, setData, refreshData }) {
   const [editingItem, setEditingItem] = useState(null);
   const [loading, setLoading] = useState(false);
   
+  // Custom Confirm Popup state
+  const [modalState, setModalState] = useState({
+    isOpen: false,
+    title: '',
+    message: '',
+    variant: 'danger',
+    confirmText: 'Confirmar',
+    cancelText: 'Cancelar',
+    isNotice: false,
+    loading: false,
+    onConfirmHandler: null
+  });
+
+  const showConfirmModal = ({ title, message, variant = 'danger', confirmText = 'Eliminar', onConfirm }) => {
+    setModalState({
+      isOpen: true,
+      title,
+      message,
+      variant,
+      confirmText,
+      cancelText: 'Cancelar',
+      isNotice: false,
+      loading: false,
+      onConfirmHandler: async () => {
+        setModalState((prev) => ({ ...prev, loading: true }));
+        try {
+          await onConfirm();
+        } finally {
+          setModalState((prev) => ({ ...prev, isOpen: false, loading: false }));
+        }
+      }
+    });
+  };
+
+  const showNoticeModal = ({ title = 'Atención', message, variant = 'info' }) => {
+    setModalState({
+      isOpen: true,
+      title,
+      message,
+      variant,
+      confirmText: 'Entendido',
+      cancelText: '',
+      isNotice: true,
+      loading: false,
+      onConfirmHandler: () => setModalState((prev) => ({ ...prev, isOpen: false }))
+    });
+  };
+
   // Media uploads states
   const [uploadedImages, setUploadedImages] = useState([]);
   const [uploadedVideos, setUploadedVideos] = useState([]);
@@ -394,18 +443,25 @@ export default function ListingsManagerView({ data, setData, refreshData }) {
     setUploadedVideos((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('¿Estás seguro de eliminar esta publicación? Se eliminará inmediatamente del sitio web.')) return;
-    setLoading(true);
-    try {
-      await deleteListingDB(id);
-      await refreshData();
-    } catch (err) {
-      alert('Error al eliminar la publicación.');
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
+  const handleDelete = (id) => {
+    showConfirmModal({
+      title: '¿Eliminar Publicación?',
+      message: '¿Estás seguro de eliminar esta publicación? Se eliminará inmediatamente del sitio web.',
+      variant: 'danger',
+      confirmText: 'Eliminar Publicación',
+      onConfirm: async () => {
+        try {
+          await deleteListingDB(id);
+          await refreshData();
+        } catch (err) {
+          showNoticeModal({
+            title: 'Error',
+            message: 'Ocurrió un error al intentar eliminar la publicación.',
+            variant: 'danger'
+          });
+        }
+      }
+    });
   };
 
   const handleSubmit = async (e) => {
@@ -1452,6 +1508,20 @@ export default function ListingsManagerView({ data, setData, refreshData }) {
           ))}
         </div>
       )}
+
+      {/* Custom Confirm & Notice Modal */}
+      <ConfirmModal
+        isOpen={modalState.isOpen}
+        title={modalState.title}
+        message={modalState.message}
+        variant={modalState.variant}
+        confirmText={modalState.confirmText}
+        cancelText={modalState.cancelText}
+        isNotice={modalState.isNotice}
+        loading={modalState.loading}
+        onConfirm={modalState.onConfirmHandler}
+        onCancel={() => setModalState((prev) => ({ ...prev, isOpen: false }))}
+      />
     </div>
   );
 }

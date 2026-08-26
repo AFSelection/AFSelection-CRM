@@ -1,10 +1,44 @@
 import React, { useState } from 'react';
 import { Plus, Trash2, Layers, FolderPlus } from 'lucide-react';
+import ConfirmModal from './ConfirmModal';
 
 export default function SectionsManagerView({ data, setData }) {
   const [newSectionName, setNewSectionName] = useState('');
   const [newSectionIcon, setNewSectionIcon] = useState('Layers');
   const [categoryInputs, setCategoryInputs] = useState({});
+
+  const [modalState, setModalState] = useState({
+    isOpen: false,
+    title: '',
+    message: '',
+    variant: 'danger',
+    confirmText: 'Confirmar',
+    cancelText: 'Cancelar',
+    isNotice: false,
+    loading: false,
+    onConfirmHandler: null
+  });
+
+  const showConfirmModal = ({ title, message, variant = 'danger', confirmText = 'Eliminar', onConfirm }) => {
+    setModalState({
+      isOpen: true,
+      title,
+      message,
+      variant,
+      confirmText,
+      cancelText: 'Cancelar',
+      isNotice: false,
+      loading: false,
+      onConfirmHandler: async () => {
+        setModalState((prev) => ({ ...prev, loading: true }));
+        try {
+          await onConfirm();
+        } finally {
+          setModalState((prev) => ({ ...prev, isOpen: false, loading: false }));
+        }
+      }
+    });
+  };
 
   const sections = data.sections || [];
 
@@ -36,11 +70,22 @@ export default function SectionsManagerView({ data, setData }) {
   };
 
   const handleDeleteSection = (secId) => {
+    const doDelete = () => {
+      const updatedSections = sections.filter((s) => s.id !== secId);
+      persistSections(updatedSections);
+    };
+
     if (secId === 'autos' || secId === 'propiedades') {
-      if (!window.confirm(`¿Estás seguro de eliminar la sección principal "${secId}"?`)) return;
+      showConfirmModal({
+        title: '¿Eliminar Sección Principal?',
+        message: `¿Estás seguro de eliminar la sección principal "${secId.toUpperCase()}"?`,
+        variant: 'danger',
+        confirmText: 'Eliminar Sección',
+        onConfirm: doDelete
+      });
+    } else {
+      doDelete();
     }
-    const updatedSections = sections.filter((s) => s.id !== secId);
-    persistSections(updatedSections);
   };
 
   const handleAddCategory = (secId) => {
@@ -220,6 +265,19 @@ export default function SectionsManagerView({ data, setData }) {
         ))}
       </div>
 
+      {/* Custom Confirm Popup */}
+      <ConfirmModal
+        isOpen={modalState.isOpen}
+        title={modalState.title}
+        message={modalState.message}
+        variant={modalState.variant}
+        confirmText={modalState.confirmText}
+        cancelText={modalState.cancelText}
+        isNotice={modalState.isNotice}
+        loading={modalState.loading}
+        onConfirm={modalState.onConfirmHandler}
+        onCancel={() => setModalState((prev) => ({ ...prev, isOpen: false }))}
+      />
     </div>
   );
 }
