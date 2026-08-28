@@ -210,37 +210,44 @@ export default function SectionsManagerView({ data, setData }) {
   };
 
   const handleDeleteCustomField = (secId, fieldId) => {
-    const updatedSections = sections.map((s) => {
-      if (s.id === secId) {
-        return {
-          ...s,
-          customFields: (s.customFields || []).filter((f) => f.id !== fieldId && f.name !== fieldId)
-        };
-      }
-      return s;
-    });
+    const targetSec = sections.find((s) => s.id === secId);
+    const targetField = targetSec?.customFields?.find((f) => f.id === fieldId || f.name === fieldId);
+    const fieldName = targetField?.label || 'este campo';
 
-    persistSections(updatedSections);
+    showConfirmModal({
+      title: `¿Eliminar Campo "${fieldName}"?`,
+      message: `¿Estás seguro de eliminar el campo "${fieldName}" de esta sección?`,
+      variant: 'danger',
+      confirmText: 'Eliminar Campo',
+      onConfirm: () => {
+        const updatedSections = sections.map((s) => {
+          if (s.id === secId) {
+            return {
+              ...s,
+              customFields: (s.customFields || []).filter((f) => f.id !== fieldId && f.name !== fieldId)
+            };
+          }
+          return s;
+        });
+        persistSections(updatedSections);
+      }
+    });
   };
 
   const handleDeleteSection = (secId) => {
+    const targetSec = sections.find((s) => s.id === secId);
+    const secName = targetSec ? targetSec.name : secId;
 
-    const doDelete = () => {
-      const updatedSections = sections.filter((s) => s.id !== secId);
-      persistSections(updatedSections);
-    };
-
-    if (secId === 'autos' || secId === 'propiedades') {
-      showConfirmModal({
-        title: '¿Eliminar Sección Principal?',
-        message: `¿Estás seguro de eliminar la sección principal "${secId.toUpperCase()}"?`,
-        variant: 'danger',
-        confirmText: 'Eliminar Sección',
-        onConfirm: doDelete
-      });
-    } else {
-      doDelete();
-    }
+    showConfirmModal({
+      title: `¿Eliminar Sección "${secName}"?`,
+      message: `¿Estás seguro de eliminar la sección "${secName}"? Esta acción removerá la sección de la lista.`,
+      variant: 'danger',
+      confirmText: 'Eliminar Sección',
+      onConfirm: () => {
+        const updatedSections = sections.filter((s) => s.id !== secId);
+        persistSections(updatedSections);
+      }
+    });
   };
 
   const handleAddCategory = (secId) => {
@@ -264,18 +271,27 @@ export default function SectionsManagerView({ data, setData }) {
   };
 
   const handleDeleteCategory = (secId, catToDelete) => {
-    const updatedSections = sections.map((s) => {
-      if (s.id === secId) {
-        return {
-          ...s,
-          categories: s.categories.filter((c) => c !== catToDelete)
-        };
-      }
-      return s;
-    });
+    showConfirmModal({
+      title: `¿Quitar Categoría "${catToDelete}"?`,
+      message: `¿Estás seguro de eliminar la categoría "${catToDelete}" de esta sección?`,
+      variant: 'danger',
+      confirmText: 'Quitar Categoría',
+      onConfirm: () => {
+        const updatedSections = sections.map((s) => {
+          if (s.id === secId) {
+            return {
+              ...s,
+              categories: s.categories.filter((c) => c !== catToDelete)
+            };
+          }
+          return s;
+        });
 
-    persistSections(updatedSections);
+        persistSections(updatedSections);
+      }
+    });
   };
+
 
   // Image Upload Helper for Home Sections
   const handleImageUpload = async (e, updateCallback, keyId) => {

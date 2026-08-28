@@ -448,12 +448,29 @@ export default function ListingsManagerView({ data, setData, refreshData }) {
   };
 
   const removeImage = (index) => {
-    setUploadedImages((prev) => prev.filter((_, i) => i !== index));
+    showConfirmModal({
+      title: '¿Quitar Imagen?',
+      message: '¿Estás seguro de quitar esta imagen del borrador de la publicación?',
+      variant: 'danger',
+      confirmText: 'Quitar Imagen',
+      onConfirm: () => {
+        setUploadedImages((prev) => prev.filter((_, i) => i !== index));
+      }
+    });
   };
 
   const removeVideo = (index) => {
-    setUploadedVideos((prev) => prev.filter((_, i) => i !== index));
+    showConfirmModal({
+      title: '¿Quitar Video?',
+      message: '¿Estás seguro de quitar este video del borrador de la publicación?',
+      variant: 'danger',
+      confirmText: 'Quitar Video',
+      onConfirm: () => {
+        setUploadedVideos((prev) => prev.filter((_, i) => i !== index));
+      }
+    });
   };
+
 
   const handleDelete = (id) => {
     showConfirmModal({
