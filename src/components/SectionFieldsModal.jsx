@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { X, CheckCircle2, Plus, Trash2, Sliders, Shield, AlertCircle } from 'lucide-react';
+import { X, CheckCircle2, Plus, Trash2, Sliders, Shield, AlertCircle, Pencil } from 'lucide-react';
 import CustomSelect from './CustomSelect';
 
 export const FIELD_PRESETS = [
+
   // General & Rodados
   { id: 'marca', label: 'Marca / Fabricante', category: 'Vehículos & Rodados', type: 'text', defaultRequired: true },
   { id: 'modelo', label: 'Modelo / Versión', category: 'Vehículos & Rodados', type: 'text', defaultRequired: true },
@@ -60,6 +61,13 @@ export default function SectionFieldsModal({ isOpen, section, onClose, onSave })
   const [customType, setCustomType] = useState('text');
   const [customOptionsStr, setCustomOptionsStr] = useState('');
   const [customRequired, setCustomRequired] = useState(false);
+
+  // Edit Field State
+  const [editingFieldId, setEditingFieldId] = useState(null);
+  const [editLabel, setEditLabel] = useState('');
+  const [editType, setEditType] = useState('text');
+  const [editOptionsStr, setEditOptionsStr] = useState('');
+  const [editRequired, setEditRequired] = useState(false);
 
   const categories = Array.from(new Set(FIELD_PRESETS.map((f) => f.category)));
 
@@ -128,14 +136,53 @@ export default function SectionFieldsModal({ isOpen, section, onClose, onSave })
     setCustomRequired(false);
   };
 
+  const handleStartEditField = (field) => {
+    const fieldId = field.id || field.name;
+    setEditingFieldId(fieldId);
+    setEditLabel(field.label || '');
+    setEditType(field.type || 'text');
+    setEditOptionsStr(field.options ? field.options.join(', ') : '');
+    setEditRequired(Boolean(field.required));
+  };
+
+  const handleSaveEditField = (fieldId) => {
+    if (!editLabel.trim()) return;
+
+    const options = editType === 'select'
+      ? editOptionsStr.split(',').map((s) => s.trim()).filter(Boolean)
+      : [];
+
+    setFieldsState((prev) =>
+      prev.map((f) => {
+        if (f.id === fieldId || f.name === fieldId) {
+          return {
+            ...f,
+            label: editLabel.trim(),
+            type: editType,
+            options,
+            required: editRequired
+          };
+        }
+        return f;
+      })
+    );
+
+    setEditingFieldId(null);
+  };
+
   const handleRemoveCustomField = (fieldId) => {
-    setFieldsState((prev) => prev.filter((f) => f.id !== fieldId && f.name !== fieldId));
+    const targetField = fieldsState.find((f) => f.id === fieldId || f.name === fieldId);
+    const label = targetField?.label || 'este campo';
+    if (window.confirm(`¿Estás seguro de eliminar el campo "${label}"?`)) {
+      setFieldsState((prev) => prev.filter((f) => f.id !== fieldId && f.name !== fieldId));
+    }
   };
 
   const handleSaveModal = () => {
     onSave(section.id, fieldsState);
     onClose();
   };
+
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
@@ -235,39 +282,141 @@ export default function SectionFieldsModal({ isOpen, section, onClose, onSave })
             {/* List of custom non-preset fields */}
             {fieldsState.filter((f) => f.isCustom || !FIELD_PRESETS.some((p) => p.id === f.id)).length > 0 && (
               <div className="space-y-2">
-                {fieldsState.filter((f) => f.isCustom || !FIELD_PRESETS.some((p) => p.id === f.id)).map((field) => (
-                  <div
-                    key={field.id || field.name}
-                    className="p-3 bg-bg-canvas/70 border border-border-light rounded-xl flex items-center justify-between text-xs"
-                  >
-                    <div className="flex items-center gap-2">
-                      <span className="font-bold text-primary">{field.label}</span>
-                      <span className="text-[10px] text-primary/40 font-mono">({field.type})</span>
-                    </div>
+                {fieldsState.filter((f) => f.isCustom || !FIELD_PRESETS.some((p) => p.id === f.id)).map((field) => {
+                  const fieldId = field.id || field.name;
+                  const isEditing = editingFieldId === fieldId;
 
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => toggleRequired(field.id || field.name)}
-                        className={`px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider cursor-pointer ${
-                          field.required ? 'bg-red-50 text-red-600 border border-red-200' : 'bg-gray-100 text-gray-500'
-                        }`}
-                      >
-                        {field.required ? 'Obligatorio' : 'Opcional'}
-                      </button>
+                  if (isEditing) {
+                    return (
+                      <div key={fieldId} className="p-4 bg-primary/5 border border-primary/30 rounded-2xl space-y-3 animate-in fade-in duration-150">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] font-black uppercase tracking-wider text-primary">
+                            Editar Campo: {field.label}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => setEditingFieldId(null)}
+                            className="text-xs text-primary/40 hover:text-primary font-bold cursor-pointer"
+                          >
+                            ✕
+                          </button>
+                        </div>
 
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveCustomField(field.id || field.name)}
-                        className="text-primary/30 hover:text-accent-red p-1 rounded-lg hover:bg-red-50"
-                      >
-                        <Trash2 size={14} />
-                      </button>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <input
+                            type="text"
+                            placeholder="Etiqueta / Nombre"
+                            className="w-full bg-white border border-border-light text-xs font-semibold text-primary rounded-xl py-2 px-3 outline-none"
+                            value={editLabel}
+                            onChange={(e) => setEditLabel(e.target.value)}
+                          />
+
+                          <CustomSelect
+                            value={editType}
+                            onChange={(val) => setEditType(val)}
+                            options={[
+                              { label: 'Texto libre', value: 'text' },
+                              { label: 'Número', value: 'number' },
+                              { label: 'Selección (Dropdown)', value: 'select' }
+                            ]}
+                          />
+                        </div>
+
+                        {editType === 'select' && (
+                          <input
+                            type="text"
+                            placeholder="Opciones separadas por coma (ej: Negro, Blanco, Rojo)"
+                            className="w-full bg-white border border-border-light text-xs text-primary rounded-xl py-2 px-3 outline-none"
+                            value={editOptionsStr}
+                            onChange={(e) => setEditOptionsStr(e.target.value)}
+                          />
+                        )}
+
+                        <div className="flex items-center justify-between pt-1">
+                          <label className="flex items-center gap-2 text-xs font-semibold text-primary cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={editRequired}
+                              onChange={(e) => setEditRequired(e.target.checked)}
+                              className="rounded border-border-light text-primary focus:ring-0"
+                            />
+                            <span>Es Obligatorio</span>
+                          </label>
+
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => setEditingFieldId(null)}
+                              className="px-3 py-1.5 border border-border-light text-xs font-bold rounded-lg text-primary/60 hover:bg-bg-canvas cursor-pointer"
+                            >
+                              Cancelar
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleSaveEditField(fieldId)}
+                              className="bg-primary hover:bg-primary-hover text-white text-xs font-bold py-1.5 px-4 rounded-lg flex items-center gap-1 cursor-pointer transition-colors"
+                            >
+                              <CheckCircle2 size={13} />
+                              <span>Actualizar</span>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <div
+                      key={fieldId}
+                      className="p-3 bg-bg-canvas/70 border border-border-light rounded-xl flex items-center justify-between text-xs"
+                    >
+                      <div className="flex flex-col">
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-primary">{field.label}</span>
+                          <span className="text-[10px] text-primary/40 font-mono">({field.type})</span>
+                        </div>
+                        {field.type === 'select' && field.options?.length > 0 && (
+                          <span className="text-[10px] text-primary/50 font-medium truncate max-w-xs mt-0.5">
+                            Opciones: {field.options.join(', ')}
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => toggleRequired(fieldId)}
+                          className={`px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider cursor-pointer ${
+                            field.required ? 'bg-red-50 text-red-600 border border-red-200' : 'bg-gray-100 text-gray-500'
+                          }`}
+                        >
+                          {field.required ? 'Obligatorio' : 'Opcional'}
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => handleStartEditField(field)}
+                          className="text-primary/40 hover:text-primary p-1.5 rounded-lg hover:bg-primary/5 cursor-pointer transition-colors"
+                          title="Editar campo"
+                        >
+                          <Pencil size={14} />
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveCustomField(fieldId)}
+                          className="text-primary/30 hover:text-accent-red p-1.5 rounded-lg hover:bg-red-50 cursor-pointer transition-colors"
+                          title="Eliminar campo"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
+
 
             {/* Add Custom Field Form */}
             <div className="p-4 bg-primary/5 border border-primary/20 rounded-2xl space-y-3">
