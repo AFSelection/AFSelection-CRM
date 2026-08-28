@@ -1017,7 +1017,7 @@ export default function ListingsManagerView({ data, setData, refreshData }) {
                       />
                     </div>
                   </div>
-                ) : (
+                ) : formData.sectionId === 'propiedades' ? (
                   <div className="space-y-4">
                     <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
                       <div className="space-y-1">
@@ -1087,7 +1087,8 @@ export default function ListingsManagerView({ data, setData, refreshData }) {
                       </div>
                     </div>
                   </div>
-                )}
+                ) : null}
+
               </div>
 
               {/* Dynamic Custom Fields Box for Selected Section */}
