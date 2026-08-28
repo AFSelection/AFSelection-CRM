@@ -565,8 +565,9 @@ export default function SectionsManagerView({ data, setData }) {
           </div>
 
           {/* Sections List */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
             {sections.map((sec) => (
+
               <div
                 key={sec.id}
                 className="bg-white border border-border-light rounded-3xl p-6 flex flex-col shadow-sm"
@@ -678,38 +679,35 @@ export default function SectionsManagerView({ data, setData }) {
                     <span>Configurar Campos y Atributos ({(sec.customFields || []).length} activos)</span>
                   </button>
 
-                  {/* List of active Fields on this card */}
-                  <div className="space-y-2 pt-1">
+                  {/* Compact summary badges of active fields */}
+                  <div className="flex flex-wrap gap-1.5 pt-1">
                     {(!sec.customFields || sec.customFields.length === 0) ? (
-                      <p className="text-xs text-primary/35 italic font-medium">Sin campos asignados. Hacé clic arriba para elegir qué campos tendrá.</p>
+                      <span className="text-xs text-primary/35 italic font-medium">Sin campos asignados aún.</span>
                     ) : (
-                      sec.customFields.map((field) => (
-                        <div
-                          key={field.id || field.name}
-                          className="flex items-center justify-between p-2.5 bg-bg-canvas/60 border border-border-light rounded-xl text-xs"
-                        >
-                          <div className="flex items-center gap-2">
-                            <span className="font-bold text-primary">{field.label}</span>
-                            <span className="text-[10px] text-primary/40 font-mono">({field.type})</span>
-                          </div>
-
-                          <div className="flex items-center gap-2">
-                            <span className={`text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full ${field.required ? 'bg-red-50 text-red-600 border border-red-100' : 'bg-gray-100 text-gray-500'}`}>
-                              {field.required ? 'Obligatorio' : 'Opcional'}
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() => handleDeleteCustomField(sec.id, field.id || field.name)}
-                              className="text-primary/30 hover:text-accent-red p-1 rounded-lg hover:bg-red-50 transition-colors"
-                              title="Eliminar campo"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
-                        </div>
-                      ))
+                      <>
+                        {sec.customFields.slice(0, 4).map((f) => (
+                          <span
+                            key={f.id || f.name}
+                            onClick={() => setConfiguringSection(sec)}
+                            className="bg-bg-canvas border border-border-light text-primary/75 text-[11px] font-semibold px-2.5 py-1 rounded-lg cursor-pointer hover:bg-primary/5 transition-colors"
+                            title="Hacé clic para configurar campos"
+                          >
+                            {f.label} {f.required && <span className="text-red-500 font-bold">*</span>}
+                          </span>
+                        ))}
+                        {sec.customFields.length > 4 && (
+                          <button
+                            type="button"
+                            onClick={() => setConfiguringSection(sec)}
+                            className="bg-primary/10 text-primary text-[10px] font-black px-2.5 py-1 rounded-lg hover:bg-primary/20 cursor-pointer transition-colors"
+                          >
+                            +{sec.customFields.length - 4} MÁS...
+                          </button>
+                        )}
+                      </>
                     )}
                   </div>
+
                 </div>
               </div>
             ))}
