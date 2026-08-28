@@ -4,9 +4,10 @@ import { supabase } from '../services/supabase';
 import { fetchSiteSetting, saveSiteSetting, saveSectionsDB, DEFAULT_STAGGERED_SHOWCASE, DEFAULT_TESTIMONIALS_SECTION } from '../services/storage';
 import ConfirmModal from './ConfirmModal';
 import SectionIcon from './SectionIcon';
-
+import CustomSelect from './CustomSelect';
 
 export default function SectionsManagerView({ data, setData }) {
+
   const [activeTab, setActiveTab] = useState('sections'); // 'sections' | 'staggered' | 'testimonials'
   const [newSectionName, setNewSectionName] = useState('');
   const [newSectionIcon, setNewSectionIcon] = useState('Layers');
@@ -416,27 +417,26 @@ export default function SectionsManagerView({ data, setData }) {
               {/* Icon Mode Specific Controls */}
               {iconMode === 'lucide' && (
                 <div className="space-y-2">
-                  <label className="text-[10px] font-extrabold tracking-widest text-primary/40 uppercase block">
-                    Seleccionar Icono Estándar
-                  </label>
-                  <select
-                    className="w-full bg-bg-canvas/50 border border-border-light focus:border-primary focus:bg-white text-sm text-primary rounded-xl py-3 px-4 outline-none transition-all duration-200"
+                  <CustomSelect
+                    label="Seleccionar Icono Estándar"
                     value={newSectionIcon}
-                    onChange={(e) => setNewSectionIcon(e.target.value)}
-                  >
-                    <option value="Layers">Capas / General (Layers)</option>
-                    <option value="Car">Vehículo (Car)</option>
-                    <option value="Home">Inmueble (Home)</option>
-                    <option value="TrendingUp">Inversión (TrendingUp)</option>
-                    <option value="Anchor">Náutica (Anchor)</option>
-                    <option value="Bike">Bicicleta (Bike)</option>
-                    <option value="Zap">Eléctrico / Motos (Zap)</option>
-                    <option value="Watch">Relojes / Joyas (Watch)</option>
-                    <option value="Briefcase">Comercial / Negocios (Briefcase)</option>
-                    <option value="Sparkles">Lujo / Destacado (Sparkles)</option>
-                  </select>
+                    onChange={(val) => setNewSectionIcon(val)}
+                    options={[
+                      { label: 'Capas / General (Layers)', value: 'Layers' },
+                      { label: 'Vehículo (Car)', value: 'Car' },
+                      { label: 'Inmueble (Home)', value: 'Home' },
+                      { label: 'Inversión (TrendingUp)', value: 'TrendingUp' },
+                      { label: 'Náutica (Anchor)', value: 'Anchor' },
+                      { label: 'Bicicleta (Bike)', value: 'Bike' },
+                      { label: 'Eléctrico / Motos (Zap)', value: 'Zap' },
+                      { label: 'Relojes / Joyas (Watch)', value: 'Watch' },
+                      { label: 'Comercial / Negocios (Briefcase)', value: 'Briefcase' },
+                      { label: 'Lujo / Destacado (Sparkles)', value: 'Sparkles' }
+                    ]}
+                  />
                 </div>
               )}
+
 
               {iconMode === 'iconify' && (
                 <div className="space-y-3">
@@ -657,16 +657,17 @@ export default function SectionsManagerView({ data, setData }) {
                           value={fieldLabel}
                           onChange={(e) => setFieldLabel(e.target.value)}
                         />
-                        <select
-                          className="w-full bg-white border border-border-light text-xs text-primary rounded-xl py-2 px-3 outline-none"
+                        <CustomSelect
                           value={fieldType}
-                          onChange={(e) => setFieldType(e.target.value)}
-                        >
-                          <option value="text">Texto</option>
-                          <option value="number">Número</option>
-                          <option value="select">Selección (Dropdown)</option>
-                        </select>
+                          onChange={(val) => setFieldType(val)}
+                          options={[
+                            { label: 'Texto', value: 'text' },
+                            { label: 'Número', value: 'number' },
+                            { label: 'Selección (Dropdown)', value: 'select' }
+                          ]}
+                        />
                       </div>
+
 
                       {fieldType === 'select' && (
                         <input

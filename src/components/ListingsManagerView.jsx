@@ -1089,18 +1089,13 @@ export default function ListingsManagerView({ data, setData, refreshData }) {
                         </label>
 
                         {field.type === 'select' ? (
-                          <select
-                            className="w-full bg-white border border-border-light focus:border-primary text-xs font-semibold text-primary rounded-xl py-3 px-3.5 outline-none"
+                          <CustomSelect
                             value={customFieldValues[field.name] || ''}
-                            onChange={(e) => setCustomFieldValues({ ...customFieldValues, [field.name]: e.target.value })}
-                            required={field.required}
-                          >
-                            <option value="">Seleccionar {field.label}...</option>
-                            {(field.options || []).map((opt) => (
-                              <option key={opt} value={opt}>{opt}</option>
-                            ))}
-                          </select>
+                            onChange={(val) => setCustomFieldValues({ ...customFieldValues, [field.name]: val })}
+                            options={[{ label: `Seleccionar ${field.label}...`, value: '' }, ...(field.options || []).map(opt => ({ label: opt, value: opt }))]}
+                          />
                         ) : (
+
                           <input
                             type={field.type === 'number' ? 'number' : 'text'}
                             className="w-full bg-white border border-border-light focus:border-primary text-xs font-semibold text-primary rounded-xl py-3 px-3.5 outline-none"
