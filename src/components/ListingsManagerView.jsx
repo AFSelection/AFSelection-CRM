@@ -273,6 +273,9 @@ export default function ListingsManagerView({ data, setData, refreshData }) {
     showAddress: true
   });
 
+  // Custom Fields state for the active section
+  const [customFieldValues, setCustomFieldValues] = useState({});
+
   const sections = data.sections || [];
   const listings = data.listings || [];
 
@@ -303,8 +306,9 @@ export default function ListingsManagerView({ data, setData, refreshData }) {
     tempIdRef.current = `item-${Date.now()}`;
     setEditingItem(null);
     setUploadedImages([]);
-
     setUploadedVideos([]);
+    setCustomFieldValues({});
+
     setFormData({
       title: '',
       subtitle: '',
@@ -341,6 +345,7 @@ export default function ListingsManagerView({ data, setData, refreshData }) {
     setEditingItem(item);
     setUploadedImages(item.images || []);
     setUploadedVideos(item.videos || []);
+    setCustomFieldValues(item.customFields || item.specs || {});
 
     const isCurrentlyDiscounted = Boolean(item.isOffer) && item.oldPrice && Number(item.oldPrice) > Number(item.price);
 
@@ -374,6 +379,7 @@ export default function ListingsManagerView({ data, setData, refreshData }) {
     });
     setIsModalOpen(true);
   };
+
 
   const handleImageUploadChange = async (e) => {
     const files = Array.from(e.target.files);
@@ -473,6 +479,18 @@ export default function ListingsManagerView({ data, setData, refreshData }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.title || !formData.price) return;
+
+    // Validate required custom fields for the selected section
+    const currentSecObj = sections.find((s) => s.id === formData.sectionId);
+    if (currentSecObj && currentSecObj.customFields && currentSecObj.customFields.length > 0) {
+      for (const field of currentSecObj.customFields) {
+        if (field.required && (!customFieldValues[field.name] || !String(customFieldValues[field.name]).trim())) {
+          alert(`El campo "${field.label}" es obligatorio para la sección "${currentSecObj.name}".`);
+          return;
+        }
+      }
+    }
+
     setLoading(true);
 
     const isDiscountActive = Boolean(formData.isOffer) && formData.discountPrice && Number(formData.discountPrice) < Number(formData.price);
@@ -494,7 +512,9 @@ export default function ListingsManagerView({ data, setData, refreshData }) {
       images: uploadedImages,
       videos: uploadedVideos,
       operationType: formData.operationType || 'Venta',
-      showAddress: formData.showAddress !== false
+      showAddress: formData.showAddress !== false,
+      specs: customFieldValues,
+      customFields: customFieldValues
     };
 
     // Specific specs based on section
@@ -523,6 +543,7 @@ export default function ListingsManagerView({ data, setData, refreshData }) {
       newItem.surface = Number(formData.surface) || 0;
       newItem.rooms = Number(formData.rooms) || 0;
     }
+
 
     try {
       await saveListingDB(newItem);
@@ -1051,6 +1072,49 @@ export default function ListingsManagerView({ data, setData, refreshData }) {
                   </div>
                 )}
               </div>
+
+              {/* Dynamic Custom Fields Box for Selected Section */}
+              {activeSectionObj?.customFields && activeSectionObj.customFields.length > 0 && (
+                <div className="p-5 bg-primary/5 border border-primary/20 rounded-2xl space-y-4">
+                  <h4 className="text-[10px] font-black tracking-widest text-primary uppercase leading-none border-b border-primary/10 pb-3 flex items-center justify-between">
+                    <span>Campos Específicos: {activeSectionObj.name}</span>
+                    <span className="text-[9px] text-primary/50 font-bold">Personalizados</span>
+                  </h4>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {activeSectionObj.customFields.map((field) => (
+                      <div key={field.id || field.name} className="space-y-1.5">
+                        <label className="text-[10px] font-extrabold tracking-widest text-primary/60 uppercase block">
+                          {field.label} {field.required ? <span className="text-red-500">*</span> : <span className="text-primary/30 text-[9px]">(opcional)</span>}
+                        </label>
+
+                        {field.type === 'select' ? (
+                          <select
+                            className="w-full bg-white border border-border-light focus:border-primary text-xs font-semibold text-primary rounded-xl py-3 px-3.5 outline-none"
+                            value={customFieldValues[field.name] || ''}
+                            onChange={(e) => setCustomFieldValues({ ...customFieldValues, [field.name]: e.target.value })}
+                            required={field.required}
+                          >
+                            <option value="">Seleccionar {field.label}...</option>
+                            {(field.options || []).map((opt) => (
+                              <option key={opt} value={opt}>{opt}</option>
+                            ))}
+                          </select>
+                        ) : (
+                          <input
+                            type={field.type === 'number' ? 'number' : 'text'}
+                            className="w-full bg-white border border-border-light focus:border-primary text-xs font-semibold text-primary rounded-xl py-3 px-3.5 outline-none"
+                            placeholder={`Ej: ${field.label}`}
+                            value={customFieldValues[field.name] || ''}
+                            onChange={(e) => setCustomFieldValues({ ...customFieldValues, [field.name]: e.target.value })}
+                            required={field.required}
+                          />
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Description */}
               <div className="space-y-1.5">

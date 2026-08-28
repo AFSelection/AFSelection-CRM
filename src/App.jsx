@@ -7,7 +7,7 @@ import SectionsManagerView from './components/SectionsManagerView';
 import LeadsManagerView from './components/LeadsManagerView';
 import HeroManagerView from './components/HeroManagerView';
 import { supabase } from './services/supabase';
-import { INITIAL_SECTIONS, fetchListings, fetchLeads } from './services/storage';
+import { INITIAL_SECTIONS, fetchSections, fetchListings, fetchLeads } from './services/storage';
 
 export default function App() {
   const [session, setSession] = useState(null);
@@ -55,10 +55,11 @@ export default function App() {
   const loadDatabaseData = async () => {
     if (!session) return;
     try {
+      const sections = await fetchSections();
       const listings = await fetchListings();
       const leads = await fetchLeads();
       setData({
-        sections: INITIAL_SECTIONS,
+        sections,
         listings,
         leads
       });
@@ -66,6 +67,7 @@ export default function App() {
       console.error('Error fetching dashboard data:', err);
     }
   };
+
 
   useEffect(() => {
     if (session) {

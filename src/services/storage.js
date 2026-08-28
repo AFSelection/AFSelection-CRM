@@ -48,6 +48,19 @@ export async function saveSiteSetting(key, value) {
   }
 }
 
+export async function fetchSections() {
+  const sections = await fetchSiteSetting('site_sections', null);
+  if (Array.isArray(sections) && sections.length > 0) {
+    return sections;
+  }
+  return INITIAL_SECTIONS;
+}
+
+export async function saveSectionsDB(sections) {
+  await saveSiteSetting('site_sections', sections);
+}
+
+
 export const DEFAULT_STAGGERED_SHOWCASE = {
   title: 'No Somos un Concesionario Tradicional',
   description: 'Facilitamos la compra y venta de vehículos y propiedades de forma directa. Revisamos cada publicación para garantizar información transparente y un proceso ágil.',
