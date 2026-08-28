@@ -120,6 +120,16 @@ export default function SectionsManagerView({ data, setData }) {
     reader.readAsText(file);
   };
 
+  const handleToggleShowOnHome = (secId, isChecked) => {
+    const updatedSections = sections.map((s) => {
+      if (s.id === secId) {
+        return { ...s, showOnHome: isChecked };
+      }
+      return s;
+    });
+    persistSections(updatedSections);
+  };
+
   const handleSaveSectionFields = (secId, updatedFields) => {
     const updatedSections = sections.map((s) => {
       if (s.id === secId) {
@@ -147,6 +157,7 @@ export default function SectionsManagerView({ data, setData }) {
       slug: slug,
       icon: finalIcon,
       iconType: iconMode,
+      showOnHome: true,
       categories: [],
       customFields: []
     };
@@ -160,6 +171,7 @@ export default function SectionsManagerView({ data, setData }) {
     // Auto open modal to configure fields for new section!
     setConfiguringSection(newSec);
   };
+
 
 
   const handleAddCustomField = (secId) => {
@@ -564,8 +576,27 @@ export default function SectionsManagerView({ data, setData }) {
                   </button>
                 </div>
 
+                {/* Toggle Show on Home */}
+                <div className="mb-5">
+                  <label className="flex items-center gap-3 cursor-pointer select-none bg-bg-canvas/70 hover:bg-bg-canvas border border-border-light rounded-2xl p-3 text-xs font-bold text-primary transition-colors">
+                    <input
+                      type="checkbox"
+                      checked={sec.showOnHome !== false}
+                      onChange={(e) => handleToggleShowOnHome(sec.id, e.target.checked)}
+                      className="w-4.5 h-4.5 rounded border-border-light text-primary focus:ring-0 cursor-pointer"
+                    />
+                    <div className="flex flex-col">
+                      <span className="leading-tight">Mostrar en la portada (Home)</span>
+                      <span className="text-[9.5px] text-primary/45 font-medium mt-0.5">
+                        {sec.showOnHome !== false ? 'Activo: se muestra carrusel con productos en la home' : 'Inactivo: sólo accesible desde navegación / filtros'}
+                      </span>
+                    </div>
+                  </label>
+                </div>
+
                 {/* Categories */}
                 <div className="mb-6 space-y-3">
+
                   <h4 className="text-[10px] font-extrabold tracking-widest text-primary/45 uppercase">
                     Categorías ({sec.categories?.length || 0})
                   </h4>
