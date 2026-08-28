@@ -945,151 +945,153 @@ export default function ListingsManagerView({ data, setData, refreshData }) {
                 </div>
               )}
 
-              {/* Specifications box */}
-              <div className="p-5 bg-bg-canvas/50 border border-border-light rounded-2xl space-y-5">
-                <h4 className="text-[10px] font-black tracking-widest text-primary/50 uppercase leading-none border-b border-border-light pb-3">
-                  Especificaciones ({formData.sectionId === 'autos' ? 'Vehículo' : formData.sectionId === 'inversiones' ? 'Inversión' : 'Propiedad'})
-                </h4>
+              {/* Specifications box for built-in sections */}
+              {['autos', 'propiedades', 'inversiones'].includes(formData.sectionId) && (
+                <div className="p-5 bg-bg-canvas/50 border border-border-light rounded-2xl space-y-5">
+                  <h4 className="text-[10px] font-black tracking-widest text-primary/50 uppercase leading-none border-b border-border-light pb-3">
+                    Especificaciones ({formData.sectionId === 'autos' ? 'Vehículo' : formData.sectionId === 'inversiones' ? 'Inversión' : 'Propiedad'})
+                  </h4>
 
-                {formData.sectionId === 'autos' ? (
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 items-end">
-                    <div className="space-y-1.5">
-                      <label className="text-[9px] font-extrabold text-primary/40 uppercase block">Año</label>
-                      <input
-                        type="number"
-                        className="w-full bg-white border border-border-light focus:border-primary text-xs text-primary rounded-xl py-2.5 px-3 outline-none"
-                        value={formData.year}
-                        onChange={(e) => setFormData({ ...formData, year: e.target.value })}
-                      />
-                    </div>
-                    <div className="space-y-1.5">
-                      <label className="text-[9px] font-extrabold text-primary/40 uppercase block">Kilometraje</label>
-                      <input
-                        type="number"
-                        className="w-full bg-white border border-border-light focus:border-primary text-xs text-primary rounded-xl py-2.5 px-3 outline-none"
-                        value={formData.kilometers}
-                        onChange={(e) => setFormData({ ...formData, kilometers: e.target.value })}
-                      />
-                    </div>
-                    <CustomSelect
-                      label="Combustible"
-                      value={formData.fuel}
-                      onChange={(val) => setFormData({ ...formData, fuel: val })}
-                      options={fuelOptions}
-                    />
-                    <CustomSelect
-                      label="Transmisión"
-                      value={formData.transmission}
-                      onChange={(val) => setFormData({ ...formData, transmission: val })}
-                      options={transmissionOptions}
-                    />
-                  </div>
-                ) : formData.sectionId === 'inversiones' ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div className="space-y-1.5">
-                      <label className="text-[9px] font-extrabold text-primary/40 uppercase block">Retorno Estimado</label>
-                      <input
-                        type="text"
-                        className="w-full bg-white border border-border-light focus:border-primary text-xs text-primary rounded-xl py-2.5 px-3 outline-none"
-                        placeholder="Ej: 14-17% Anual"
-                        value={formData.fuel}
-                        onChange={(e) => setFormData({ ...formData, fuel: e.target.value })}
-                      />
-                    </div>
-                    <div className="space-y-1.5">
-                      <label className="text-[9px] font-extrabold text-primary/40 uppercase block">Avance de Obra (%)</label>
-                      <input
-                        type="number"
-                        className="w-full bg-white border border-border-light focus:border-primary text-xs text-primary rounded-xl py-2.5 px-3 outline-none"
-                        placeholder="Ej: 62"
-                        value={formData.surface}
-                        onChange={(e) => setFormData({ ...formData, surface: e.target.value })}
-                      />
-                    </div>
-                    <div className="space-y-1.5">
-                      <label className="text-[9px] font-extrabold text-primary/40 uppercase block">Plazo (meses)</label>
-                      <input
-                        type="number"
-                        className="w-full bg-white border border-border-light focus:border-primary text-xs text-primary rounded-xl py-2.5 px-3 outline-none"
-                        placeholder="Ej: 18"
-                        value={formData.rooms}
-                        onChange={(e) => setFormData({ ...formData, rooms: e.target.value })}
-                      />
-                    </div>
-                  </div>
-                ) : formData.sectionId === 'propiedades' ? (
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
-                      <div className="space-y-1">
-                        <label className="text-[9px] font-extrabold text-primary/40 uppercase block">Sup. Total (m²)</label>
+                  {formData.sectionId === 'autos' ? (
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 items-end">
+                      <div className="space-y-1.5">
+                        <label className="text-[9px] font-extrabold text-primary/40 uppercase block">Año</label>
                         <input
                           type="number"
                           className="w-full bg-white border border-border-light focus:border-primary text-xs text-primary rounded-xl py-2.5 px-3 outline-none"
+                          value={formData.year}
+                          onChange={(e) => setFormData({ ...formData, year: e.target.value })}
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-[9px] font-extrabold text-primary/40 uppercase block">Kilometraje</label>
+                        <input
+                          type="number"
+                          className="w-full bg-white border border-border-light focus:border-primary text-xs text-primary rounded-xl py-2.5 px-3 outline-none"
+                          value={formData.kilometers}
+                          onChange={(e) => setFormData({ ...formData, kilometers: e.target.value })}
+                        />
+                      </div>
+                      <CustomSelect
+                        label="Combustible"
+                        value={formData.fuel}
+                        onChange={(val) => setFormData({ ...formData, fuel: val })}
+                        options={fuelOptions}
+                      />
+                      <CustomSelect
+                        label="Transmisión"
+                        value={formData.transmission}
+                        onChange={(val) => setFormData({ ...formData, transmission: val })}
+                        options={transmissionOptions}
+                      />
+                    </div>
+                  ) : formData.sectionId === 'inversiones' ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                      <div className="space-y-1.5">
+                        <label className="text-[9px] font-extrabold text-primary/40 uppercase block">Retorno Estimado</label>
+                        <input
+                          type="text"
+                          className="w-full bg-white border border-border-light focus:border-primary text-xs text-primary rounded-xl py-2.5 px-3 outline-none"
+                          placeholder="Ej: 14-17% Anual"
+                          value={formData.fuel}
+                          onChange={(e) => setFormData({ ...formData, fuel: e.target.value })}
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-[9px] font-extrabold text-primary/40 uppercase block">Avance de Obra (%)</label>
+                        <input
+                          type="number"
+                          className="w-full bg-white border border-border-light focus:border-primary text-xs text-primary rounded-xl py-2.5 px-3 outline-none"
+                          placeholder="Ej: 62"
                           value={formData.surface}
                           onChange={(e) => setFormData({ ...formData, surface: e.target.value })}
                         />
                       </div>
-                      <div className="space-y-1">
-                        <label className="text-[9px] font-extrabold text-primary/40 uppercase block">Ambientes</label>
+                      <div className="space-y-1.5">
+                        <label className="text-[9px] font-extrabold text-primary/40 uppercase block">Plazo (meses)</label>
                         <input
                           type="number"
                           className="w-full bg-white border border-border-light focus:border-primary text-xs text-primary rounded-xl py-2.5 px-3 outline-none"
+                          placeholder="Ej: 18"
                           value={formData.rooms}
                           onChange={(e) => setFormData({ ...formData, rooms: e.target.value })}
                         />
                       </div>
-                      <div className="space-y-1">
-                        <label className="text-[9px] font-extrabold text-primary/40 uppercase block">Dormitorios</label>
-                        <input
-                          type="number"
-                          className="w-full bg-white border border-border-light focus:border-primary text-xs text-primary rounded-xl py-2.5 px-3 outline-none"
-                          value={formData.bedrooms}
-                          onChange={(e) => setFormData({ ...formData, bedrooms: e.target.value })}
-                        />
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
+                        <div className="space-y-1">
+                          <label className="text-[9px] font-extrabold text-primary/40 uppercase block">Sup. Total (m²)</label>
+                          <input
+                            type="number"
+                            className="w-full bg-white border border-border-light focus:border-primary text-xs text-primary rounded-xl py-2.5 px-3 outline-none"
+                            value={formData.surface}
+                            onChange={(e) => setFormData({ ...formData, surface: e.target.value })}
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[9px] font-extrabold text-primary/40 uppercase block">Ambientes</label>
+                          <input
+                            type="number"
+                            className="w-full bg-white border border-border-light focus:border-primary text-xs text-primary rounded-xl py-2.5 px-3 outline-none"
+                            value={formData.rooms}
+                            onChange={(e) => setFormData({ ...formData, rooms: e.target.value })}
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[9px] font-extrabold text-primary/40 uppercase block">Dormitorios</label>
+                          <input
+                            type="number"
+                            className="w-full bg-white border border-border-light focus:border-primary text-xs text-primary rounded-xl py-2.5 px-3 outline-none"
+                            value={formData.bedrooms}
+                            onChange={(e) => setFormData({ ...formData, bedrooms: e.target.value })}
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[9px] font-extrabold text-primary/40 uppercase block">Baños</label>
+                          <input
+                            type="number"
+                            className="w-full bg-white border border-border-light focus:border-primary text-xs text-primary rounded-xl py-2.5 px-3 outline-none"
+                            value={formData.bathrooms}
+                            onChange={(e) => setFormData({ ...formData, bathrooms: e.target.value })}
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[9px] font-extrabold text-primary/40 uppercase block">Cocheras</label>
+                          <input
+                            type="number"
+                            className="w-full bg-white border border-border-light focus:border-primary text-xs text-primary rounded-xl py-2.5 px-3 outline-none"
+                            value={formData.garages}
+                            onChange={(e) => setFormData({ ...formData, garages: e.target.value })}
+                          />
+                        </div>
                       </div>
-                      <div className="space-y-1">
-                        <label className="text-[9px] font-extrabold text-primary/40 uppercase block">Baños</label>
-                        <input
-                          type="number"
-                          className="w-full bg-white border border-border-light focus:border-primary text-xs text-primary rounded-xl py-2.5 px-3 outline-none"
-                          value={formData.bathrooms}
-                          onChange={(e) => setFormData({ ...formData, bathrooms: e.target.value })}
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <label className="text-[9px] font-extrabold text-primary/40 uppercase block">Cocheras</label>
-                        <input
-                          type="number"
-                          className="w-full bg-white border border-border-light focus:border-primary text-xs text-primary rounded-xl py-2.5 px-3 outline-none"
-                          value={formData.garages}
-                          onChange={(e) => setFormData({ ...formData, garages: e.target.value })}
-                        />
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1">
+                          <label className="text-[9px] font-extrabold text-primary/40 uppercase block">Latitud Mapa</label>
+                          <input
+                            type="text"
+                            className="w-full bg-white border border-border-light focus:border-primary text-xs text-primary rounded-xl py-2.5 px-3 outline-none"
+                            value={formData.lat}
+                            onChange={(e) => setFormData({ ...formData, lat: e.target.value })}
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[9px] font-extrabold text-primary/40 uppercase block">Longitud Mapa</label>
+                          <input
+                            type="text"
+                            className="w-full bg-white border border-border-light focus:border-primary text-xs text-primary rounded-xl py-2.5 px-3 outline-none"
+                            value={formData.lng}
+                            onChange={(e) => setFormData({ ...formData, lng: e.target.value })}
+                          />
+                        </div>
                       </div>
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-1">
-                        <label className="text-[9px] font-extrabold text-primary/40 uppercase block">Latitud Mapa</label>
-                        <input
-                          type="text"
-                          className="w-full bg-white border border-border-light focus:border-primary text-xs text-primary rounded-xl py-2.5 px-3 outline-none"
-                          value={formData.lat}
-                          onChange={(e) => setFormData({ ...formData, lat: e.target.value })}
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <label className="text-[9px] font-extrabold text-primary/40 uppercase block">Longitud Mapa</label>
-                        <input
-                          type="text"
-                          className="w-full bg-white border border-border-light focus:border-primary text-xs text-primary rounded-xl py-2.5 px-3 outline-none"
-                          value={formData.lng}
-                          onChange={(e) => setFormData({ ...formData, lng: e.target.value })}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                ) : null}
+                  )}
+                </div>
+              )}
 
-              </div>
 
               {/* Dynamic Custom Fields Box for Selected Section */}
               {activeSectionObj?.customFields && activeSectionObj.customFields.length > 0 && (
