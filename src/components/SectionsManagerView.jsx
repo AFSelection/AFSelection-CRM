@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Trash2, Layers, FolderPlus, Save, Image as ImageIcon, Upload, ShieldCheck, Heart, Star, CheckCircle, RefreshCw, FileCode, Search, Check, Sparkles } from 'lucide-react';
+import { Plus, Trash2, Layers, FolderPlus, Save, Image as ImageIcon, Upload, ShieldCheck, Heart, Star, CheckCircle, RefreshCw, FileCode, Search, Check, Sparkles, Sliders } from 'lucide-react';
 import { supabase } from '../services/supabase';
 import { fetchSiteSetting, saveSiteSetting, saveSectionsDB, DEFAULT_STAGGERED_SHOWCASE, DEFAULT_TESTIMONIALS_SECTION } from '../services/storage';
 import ConfirmModal from './ConfirmModal';
 import SectionIcon from './SectionIcon';
 import CustomSelect from './CustomSelect';
+import SectionFieldsModal from './SectionFieldsModal';
 
 export default function SectionsManagerView({ data, setData }) {
 
   const [activeTab, setActiveTab] = useState('sections'); // 'sections' | 'staggered' | 'testimonials'
+  const [configuringSection, setConfiguringSection] = useState(null);
   const [newSectionName, setNewSectionName] = useState('');
   const [newSectionIcon, setNewSectionIcon] = useState('Layers');
   const [categoryInputs, setCategoryInputs] = useState({});
@@ -118,6 +120,20 @@ export default function SectionsManagerView({ data, setData }) {
     reader.readAsText(file);
   };
 
+  const handleSaveSectionFields = (secId, updatedFields) => {
+    const updatedSections = sections.map((s) => {
+      if (s.id === secId) {
+        return {
+          ...s,
+          customFields: updatedFields
+        };
+      }
+      return s;
+    });
+
+    persistSections(updatedSections);
+  };
+
   const handleAddSection = (e) => {
     e.preventDefault();
     if (!newSectionName.trim()) return;
@@ -140,7 +156,11 @@ export default function SectionsManagerView({ data, setData }) {
     setNewSectionName('');
     setSvgContent('');
     setIconifyName('ph:bicycle');
+
+    // Auto open modal to configure fields for new section!
+    setConfiguringSection(newSec);
   };
+
 
   const handleAddCustomField = (secId) => {
     if (!fieldLabel.trim()) return;
@@ -597,15 +617,24 @@ export default function SectionsManagerView({ data, setData }) {
                 <div className="pt-4 border-t border-border-light space-y-3">
                   <div className="flex items-center justify-between">
                     <h4 className="text-[10px] font-extrabold tracking-widest text-primary/45 uppercase">
-                      Campos Personalizados ({(sec.customFields || []).length})
+                      Campos de Publicación ({(sec.customFields || []).length})
                     </h4>
-                    <span className="text-[10px] text-primary/40 font-semibold">Obligatorios / Opcionales</span>
                   </div>
 
-                  {/* List of Custom Fields */}
-                  <div className="space-y-2">
+                  {/* Button to open Preset Fields Selection Modal */}
+                  <button
+                    type="button"
+                    onClick={() => setConfiguringSection(sec)}
+                    className="w-full py-3 px-4 bg-primary/5 hover:bg-primary/10 border border-primary/20 text-primary text-xs font-extrabold rounded-xl flex items-center justify-center gap-2 transition-all cursor-pointer shadow-xs"
+                  >
+                    <Sliders className="w-4 h-4" />
+                    <span>Configurar Campos y Atributos ({(sec.customFields || []).length} activos)</span>
+                  </button>
+
+                  {/* List of active Fields on this card */}
+                  <div className="space-y-2 pt-1">
                     {(!sec.customFields || sec.customFields.length === 0) ? (
-                      <p className="text-xs text-primary/35 italic">No se han definido campos adicionales para esta sección.</p>
+                      <p className="text-xs text-primary/35 italic font-medium">Sin campos asignados. Hacé clic arriba para elegir qué campos tendrá.</p>
                     ) : (
                       sec.customFields.map((field) => (
                         <div
@@ -634,94 +663,13 @@ export default function SectionsManagerView({ data, setData }) {
                       ))
                     )}
                   </div>
-
-                  {/* Add Custom Field Inline Form */}
-                  {activeSectionForFields === sec.id ? (
-                    <div className="p-3.5 bg-primary/5 border border-primary/20 rounded-2xl space-y-3 mt-3 animate-in fade-in duration-150">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-extrabold uppercase text-primary tracking-wider">Nuevo Campo Personalizado</span>
-                        <button
-                          type="button"
-                          onClick={() => setActiveSectionForFields(null)}
-                          className="text-xs text-primary/40 hover:text-primary font-bold"
-                        >
-                          ✕
-                        </button>
-                      </div>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                        <input
-                          type="text"
-                          placeholder="Nombre / Etiqueta (ej: Rodado)"
-                          className="w-full bg-white border border-border-light text-xs text-primary rounded-xl py-2 px-3 outline-none"
-                          value={fieldLabel}
-                          onChange={(e) => setFieldLabel(e.target.value)}
-                        />
-                        <CustomSelect
-                          value={fieldType}
-                          onChange={(val) => setFieldType(val)}
-                          options={[
-                            { label: 'Texto', value: 'text' },
-                            { label: 'Número', value: 'number' },
-                            { label: 'Selección (Dropdown)', value: 'select' }
-                          ]}
-                        />
-                      </div>
-
-
-                      {fieldType === 'select' && (
-                        <input
-                          type="text"
-                          placeholder="Opciones separadas por coma (ej: Carbono, Aluminio, Acero)"
-                          className="w-full bg-white border border-border-light text-xs text-primary rounded-xl py-2 px-3 outline-none"
-                          value={fieldOptionsStr}
-                          onChange={(e) => setFieldOptionsStr(e.target.value)}
-                        />
-                      )}
-
-                      <div className="flex items-center justify-between pt-1">
-                        <label className="flex items-center gap-2 text-xs font-semibold text-primary cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={fieldRequired}
-                            onChange={(e) => setFieldRequired(e.target.checked)}
-                            className="rounded border-border-light text-primary focus:ring-0"
-                          />
-                          <span>Campo Obligatorio</span>
-                        </label>
-
-                        <button
-                          type="button"
-                          onClick={() => handleAddCustomField(sec.id)}
-                          className="bg-primary hover:bg-primary-hover text-white text-xs font-bold py-2 px-4 rounded-xl flex items-center gap-1 cursor-pointer transition-colors"
-                        >
-                          <Plus className="w-3.5 h-3.5" />
-                          <span>Guardar Campo</span>
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setActiveSectionForFields(sec.id);
-                        setFieldLabel('');
-                        setFieldOptionsStr('');
-                        setFieldType('text');
-                        setFieldRequired(true);
-                      }}
-                      className="w-full py-2.5 border border-dashed border-border-light hover:border-primary text-primary/60 hover:text-primary text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
-                    >
-                      <Plus className="w-3.5 h-3.5" />
-                      <span>+ Agregar Campo Personalizado</span>
-                    </button>
-                  )}
                 </div>
               </div>
             ))}
           </div>
         </div>
       )}
+
 
 
       {/* TAB 2: POR QUÉ ELEGIRNOS */}
@@ -1128,6 +1076,15 @@ export default function SectionsManagerView({ data, setData }) {
         onConfirm={modalState.onConfirmHandler}
         onCancel={() => setModalState((prev) => ({ ...prev, isOpen: false }))}
       />
+
+      {/* Section Fields Preset Config Modal */}
+      <SectionFieldsModal
+        isOpen={Boolean(configuringSection)}
+        section={configuringSection}
+        onClose={() => setConfiguringSection(null)}
+        onSave={handleSaveSectionFields}
+      />
     </div>
   );
 }
+
