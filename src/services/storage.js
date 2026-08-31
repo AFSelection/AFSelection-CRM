@@ -192,7 +192,8 @@ function mapListingFromDB(db) {
     isOffer: db.is_offer,
     oldPrice: db.old_price,
     operationType: db.operation_type || 'Venta',
-    showAddress: db.show_address ?? true
+    showAddress: db.show_address ?? true,
+    customFields: db.specs || {}
   };
 }
 
@@ -200,19 +201,25 @@ function mapListingToDB(js) {
   if (!js) return null;
   const db = { ...js };
   db.section_id = js.sectionId;
-  db.created_at = js.createdAt || new Date().toISOString();
-  db.is_offer = js.isOffer;
-  db.old_price = js.oldPrice;
-  db.operation_type = js.operationType || 'Venta';
-  db.show_address = js.showAddress ?? true;
+  db.created_at = js.createdAt || js.created_at || new Date().toISOString();
+  db.is_offer = js.isOffer ?? js.is_offer ?? false;
+  db.old_price = js.oldPrice ?? js.old_price ?? null;
+  db.operation_type = js.operationType || js.operation_type || 'Venta';
+  db.show_address = js.showAddress ?? js.show_address ?? true;
 
-  // Clean up React state fields and map correctly
+  if (js.customFields && (!db.specs || Object.keys(db.specs).length === 0)) {
+    db.specs = js.customFields;
+  }
+
+  // Clean up React state fields and non-column properties that cause PostgREST PGRST204 (400 Bad Request)
   delete db.sectionId;
   delete db.createdAt;
   delete db.isOffer;
   delete db.oldPrice;
   delete db.operationType;
   delete db.showAddress;
+  delete db.customFields;
+  delete db.discountPrice;
   
   // Make sure array is passed
   if (typeof db.images === 'string') {

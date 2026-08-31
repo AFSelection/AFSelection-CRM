@@ -567,7 +567,7 @@ export default function ListingsManagerView({ data, setData, refreshData }) {
       await refreshData();
       setIsModalOpen(false);
     } catch (err) {
-      alert('Error al guardar la publicación en Supabase.');
+      alert('Error al guardar la publicación en Supabase: ' + (err.message || 'Error desconocido'));
       console.error(err);
     } finally {
       setLoading(false);
