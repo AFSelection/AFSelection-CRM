@@ -1577,7 +1577,7 @@ export default function ListingsManagerView({ data, setData, refreshData }) {
                       {item.sectionId === 'inversiones' ? 'Min. Inversión' : item.operationType === 'Alquiler' ? 'Precio Alquiler' : 'Precio Venta'}
                     </span>
                     <span className="text-base font-black text-accent-red tracking-tight leading-none block">
-                      {item.currency || 'USD'} {item.price?.toLocaleString()}
+                      {item.currency || 'USD'} {item.price?.toLocaleString('es-AR')}
                     </span>
                   </div>
 
