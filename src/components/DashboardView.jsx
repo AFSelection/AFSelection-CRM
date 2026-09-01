@@ -50,78 +50,84 @@ export default function DashboardView({ data, setActiveTab, onOpenAddListing }) 
       </div>
 
       {/* KPI Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 sm:gap-6">
         
         {/* KPI 1 */}
-        <div className="bg-white border border-border-light rounded-2xl p-5 flex items-center gap-4 shadow-sm">
+        <div className="bg-white border border-border-light rounded-2xl p-4 sm:p-5 flex items-center gap-3.5 shadow-sm min-w-0">
           <div className="bg-bg-canvas text-primary p-3 rounded-xl flex-shrink-0">
-            <Car className="w-6 h-6" />
+            <Car className="w-5 h-5 sm:w-6 sm:h-6" />
           </div>
-          <div>
+          <div className="min-w-0 flex-1">
             <div className="text-2xl font-black text-primary tracking-tight leading-none">
               {listings.length}
             </div>
-            <div className="text-[10px] font-extrabold tracking-wider text-primary/40 uppercase mt-1.5">
+            <div className="text-[10px] font-extrabold tracking-wider text-primary/40 uppercase mt-1.5 truncate">
               Publicaciones ({autoListings} Autos / {propListings} Prop.)
             </div>
           </div>
         </div>
 
         {/* KPI 2 */}
-        <div className="bg-white border border-border-light rounded-2xl p-5 flex items-center gap-4 shadow-sm">
+        <div className="bg-white border border-border-light rounded-2xl p-4 sm:p-5 flex items-center gap-3.5 shadow-sm min-w-0">
           <div className="bg-accent-emerald/10 text-accent-emerald p-3 rounded-xl flex-shrink-0">
-            <Inbox className="w-6 h-6" />
+            <Inbox className="w-5 h-5 sm:w-6 sm:h-6" />
           </div>
-          <div>
+          <div className="min-w-0 flex-1">
             <div className="text-2xl font-black text-primary tracking-tight leading-none">
               {leads.length}
             </div>
-            <div className="text-[10px] font-extrabold tracking-wider text-primary/40 uppercase mt-1.5">
+            <div className="text-[10px] font-extrabold tracking-wider text-primary/40 uppercase mt-1.5 truncate">
               Consultas ({pendingLeads} Pendientes)
             </div>
           </div>
         </div>
 
         {/* KPI 3 */}
-        <div className="bg-white border border-border-light rounded-2xl p-5 flex items-center gap-4 shadow-sm">
+        <div className="bg-white border border-border-light rounded-2xl p-4 sm:p-5 flex items-center gap-3.5 shadow-sm min-w-0">
           <div className="bg-primary/5 text-primary/75 p-3 rounded-xl flex-shrink-0">
-            <Layers className="w-6 h-6" />
+            <Layers className="w-5 h-5 sm:w-6 sm:h-6" />
           </div>
-          <div>
+          <div className="min-w-0 flex-1">
             <div className="text-2xl font-black text-primary tracking-tight leading-none">
               {sections.length}
             </div>
-            <div className="text-[10px] font-extrabold tracking-wider text-primary/40 uppercase mt-1.5">
+            <div className="text-[10px] font-extrabold tracking-wider text-primary/40 uppercase mt-1.5 truncate">
               Secciones Activas
             </div>
           </div>
         </div>
 
         {/* KPI 4 - Valorización USD */}
-        <div className="bg-white border border-border-light rounded-2xl p-5 flex items-center gap-4 shadow-sm">
+        <div className="bg-white border border-border-light rounded-2xl p-4 sm:p-5 flex items-center gap-3.5 shadow-sm min-w-0">
           <div className="bg-emerald-50 text-emerald-600 p-3 rounded-xl flex-shrink-0">
-            <DollarSign className="w-6 h-6" />
+            <DollarSign className="w-5 h-5 sm:w-6 sm:h-6" />
           </div>
-          <div>
-            <div className="text-lg font-black text-emerald-600 tracking-tight leading-none">
+          <div className="min-w-0 flex-1">
+            <div
+              className="text-base sm:text-lg font-black text-emerald-600 tracking-tight leading-tight truncate"
+              title={formatPrice(totalValuationUSD, 'USD')}
+            >
               {formatPrice(totalValuationUSD, 'USD')}
             </div>
-            <div className="text-[10px] font-extrabold tracking-wider text-primary/40 uppercase mt-1.5">
+            <div className="text-[10px] font-extrabold tracking-wider text-primary/40 uppercase mt-1 truncate">
               Valorización USD
             </div>
           </div>
         </div>
 
         {/* KPI 5 - Valorización ARS */}
-        <div className="bg-white border border-border-light rounded-2xl p-5 flex items-center gap-4 shadow-sm">
+        <div className="bg-white border border-border-light rounded-2xl p-4 sm:p-5 flex items-center gap-3.5 shadow-sm min-w-0">
           <div className="bg-amber-50 text-amber-600 p-3 rounded-xl flex-shrink-0">
-            <DollarSign className="w-6 h-6" />
+            <DollarSign className="w-5 h-5 sm:w-6 sm:h-6" />
           </div>
-          <div>
-            <div className="text-lg font-black text-amber-600 tracking-tight leading-none">
+          <div className="min-w-0 flex-1">
+            <div
+              className="text-base sm:text-lg font-black text-amber-600 tracking-tight leading-tight truncate"
+              title={formatPrice(totalValuationARS, 'ARS')}
+            >
               {formatPrice(totalValuationARS, 'ARS')}
             </div>
-            <div className="text-[10px] font-extrabold tracking-wider text-primary/40 uppercase mt-1.5">
+            <div className="text-[10px] font-extrabold tracking-wider text-primary/40 uppercase mt-1 truncate">
               Valorización ARS
             </div>
           </div>
