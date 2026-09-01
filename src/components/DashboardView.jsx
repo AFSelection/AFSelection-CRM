@@ -6,17 +6,20 @@ export default function DashboardView({ data, setActiveTab, onOpenAddListing }) 
   const leads = data.leads || [];
   const sections = data.sections || [];
 
-  const totalValuation = listings.reduce((acc, curr) => acc + (Number(curr.price) || 0), 0);
+  const totalValuationUSD = listings
+    .filter((l) => (l.currency || 'USD') === 'USD')
+    .reduce((acc, curr) => acc + (Number(curr.price) || 0), 0);
+
+  const totalValuationARS = listings
+    .filter((l) => l.currency === 'ARS')
+    .reduce((acc, curr) => acc + (Number(curr.price) || 0), 0);
+
   const autoListings = listings.filter((l) => l.sectionId === 'autos').length;
   const propListings = listings.filter((l) => l.sectionId === 'propiedades').length;
   const pendingLeads = leads.filter((l) => l.status === 'Pending').length;
 
-  const formatPrice = (val) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      maximumFractionDigits: 0
-    }).format(val);
+  const formatPrice = (val, currency = 'USD') => {
+    return `${currency} ${Number(val || 0).toLocaleString('es-AR')}`;
   };
 
   const getListingTitle = (listingId) => {
@@ -47,11 +50,11 @@ export default function DashboardView({ data, setActiveTab, onOpenAddListing }) 
       </div>
 
       {/* KPI Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-6">
         
         {/* KPI 1 */}
-        <div className="bg-white border border-border-light rounded-2xl p-6 flex items-center gap-4 shadow-sm">
-          <div className="bg-bg-canvas text-primary p-3 rounded-xl">
+        <div className="bg-white border border-border-light rounded-2xl p-5 flex items-center gap-4 shadow-sm">
+          <div className="bg-bg-canvas text-primary p-3 rounded-xl flex-shrink-0">
             <Car className="w-6 h-6" />
           </div>
           <div>
@@ -65,8 +68,8 @@ export default function DashboardView({ data, setActiveTab, onOpenAddListing }) 
         </div>
 
         {/* KPI 2 */}
-        <div className="bg-white border border-border-light rounded-2xl p-6 flex items-center gap-4 shadow-sm">
-          <div className="bg-accent-emerald/10 text-accent-emerald p-3 rounded-xl">
+        <div className="bg-white border border-border-light rounded-2xl p-5 flex items-center gap-4 shadow-sm">
+          <div className="bg-accent-emerald/10 text-accent-emerald p-3 rounded-xl flex-shrink-0">
             <Inbox className="w-6 h-6" />
           </div>
           <div>
@@ -80,8 +83,8 @@ export default function DashboardView({ data, setActiveTab, onOpenAddListing }) 
         </div>
 
         {/* KPI 3 */}
-        <div className="bg-white border border-border-light rounded-2xl p-6 flex items-center gap-4 shadow-sm">
-          <div className="bg-primary/5 text-primary/75 p-3 rounded-xl">
+        <div className="bg-white border border-border-light rounded-2xl p-5 flex items-center gap-4 shadow-sm">
+          <div className="bg-primary/5 text-primary/75 p-3 rounded-xl flex-shrink-0">
             <Layers className="w-6 h-6" />
           </div>
           <div>
@@ -94,17 +97,32 @@ export default function DashboardView({ data, setActiveTab, onOpenAddListing }) 
           </div>
         </div>
 
-        {/* KPI 4 */}
-        <div className="bg-white border border-border-light rounded-2xl p-6 flex items-center gap-4 shadow-sm">
-          <div className="bg-amber-50 text-accent-red p-3 rounded-xl">
+        {/* KPI 4 - Valorización USD */}
+        <div className="bg-white border border-border-light rounded-2xl p-5 flex items-center gap-4 shadow-sm">
+          <div className="bg-emerald-50 text-emerald-600 p-3 rounded-xl flex-shrink-0">
             <DollarSign className="w-6 h-6" />
           </div>
           <div>
-            <div className="text-xl font-black text-primary tracking-tight leading-none">
-              {formatPrice(totalValuation)}
+            <div className="text-lg font-black text-emerald-600 tracking-tight leading-none">
+              {formatPrice(totalValuationUSD, 'USD')}
             </div>
             <div className="text-[10px] font-extrabold tracking-wider text-primary/40 uppercase mt-1.5">
-              Valorización Catálogo
+              Valorización USD
+            </div>
+          </div>
+        </div>
+
+        {/* KPI 5 - Valorización ARS */}
+        <div className="bg-white border border-border-light rounded-2xl p-5 flex items-center gap-4 shadow-sm">
+          <div className="bg-amber-50 text-amber-600 p-3 rounded-xl flex-shrink-0">
+            <DollarSign className="w-6 h-6" />
+          </div>
+          <div>
+            <div className="text-lg font-black text-amber-600 tracking-tight leading-none">
+              {formatPrice(totalValuationARS, 'ARS')}
+            </div>
+            <div className="text-[10px] font-extrabold tracking-wider text-primary/40 uppercase mt-1.5">
+              Valorización ARS
             </div>
           </div>
         </div>
