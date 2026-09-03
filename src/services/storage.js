@@ -112,7 +112,7 @@ export const DEFAULT_TESTIMONIALS_SECTION = {
       location: 'Buenos Aires',
       tag: 'INVERSIÓN INMOBILIARIA',
       date: 'Desarrollo Alem',
-      image: 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=800&q=80'
+      image: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=800&q=80'
     },
     {
       id: 'r3',
@@ -122,7 +122,7 @@ export const DEFAULT_TESTIMONIALS_SECTION = {
       location: 'Yerba Buena, Tucumán',
       tag: 'VENTA INMOBILIARIA',
       date: 'Residencia Premium',
-      image: 'https://images.unsplash.com/photo-1617814076367-b759c7d7e738?auto=format&fit=crop&w=800&q=80'
+      image: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=800&q=80'
     }
   ]
 };
