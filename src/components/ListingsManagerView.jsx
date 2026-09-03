@@ -1402,8 +1402,21 @@ export default function ListingsManagerView({ data, setData, refreshData }) {
             </div>
 
           </div>
-
         </div>
+
+        {/* Custom Confirm & Notice Modal */}
+        <ConfirmModal
+          isOpen={modalState.isOpen}
+          title={modalState.title}
+          message={modalState.message}
+          variant={modalState.variant}
+          confirmText={modalState.confirmText}
+          cancelText={modalState.cancelText}
+          isNotice={modalState.isNotice}
+          loading={modalState.loading}
+          onConfirm={modalState.onConfirmHandler}
+          onCancel={() => setModalState((prev) => ({ ...prev, isOpen: false }))}
+        />
       </div>
     );
   }
