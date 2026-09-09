@@ -82,7 +82,13 @@ function LocationSearch({ location, onTextChange, onSelect }) {
     const label = buildLabel(item);
     setQuery(label);
     setOpen(false);
-    onSelect({ location: label, lat: item.lat, lng: item.lon });
+    const parsedLat = parseFloat(item.lat);
+    const parsedLng = parseFloat(item.lon);
+    onSelect({
+      location: label,
+      lat: !isNaN(parsedLat) ? parsedLat : '',
+      lng: !isNaN(parsedLng) ? parsedLng : ''
+    });
   };
 
   return (
@@ -549,11 +555,15 @@ export default function ListingsManagerView({ data, setData, refreshData }) {
       newItem.bathrooms = Number(formData.bathrooms) || 1;
       newItem.garages = Number(formData.garages) || 0;
 
-      if (formData.lat && formData.lng) {
-        newItem.coordinates = {
-          lat: Number(formData.lat),
-          lng: Number(formData.lng)
-        };
+      if (formData.lat !== '' && formData.lng !== '' && formData.lat !== null && formData.lng !== null) {
+        const parsedLat = parseFloat(formData.lat);
+        const parsedLng = parseFloat(formData.lng);
+        if (!isNaN(parsedLat) && !isNaN(parsedLng)) {
+          newItem.coordinates = {
+            lat: parsedLat,
+            lng: parsedLng
+          };
+        }
       }
     } else if (formData.sectionId === 'inversiones') {
       newItem.fuel = formData.fuel;
