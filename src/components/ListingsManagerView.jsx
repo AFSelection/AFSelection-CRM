@@ -3,6 +3,7 @@ import { Plus, Edit2, Trash2, MapPin, Image as ImageIcon, Search, X, ArrowUp, Ar
 import { saveListingDB, deleteListingDB } from '../services/storage';
 import { supabase } from '../services/supabase';
 import { compressImage } from '../utils/compressor';
+import { formatSpecLabel } from '../utils/specs';
 import ConfirmModal from './ConfirmModal';
 
 // Location search with Nominatim (OpenStreetMap) geocoding
@@ -1597,11 +1598,23 @@ export default function ListingsManagerView({ data, setData, refreshData }) {
                       </>
                     ) : (() => {
                       const specsObj = item.specs || item.customFields || {};
-                      const entries = Object.entries(specsObj).filter(([_, v]) => v !== null && v !== undefined && String(v).trim() !== '');
+                      const entries = Object.entries(specsObj).filter(([k, v]) => {
+                        if (v === null || v === undefined || String(v).trim() === '') return false;
+                        if (k.toLowerCase() === 'location') return false;
+                        return true;
+                      });
+
                       if (entries.length > 0) {
-                        return entries.slice(0, 3).map(([k, v]) => (
-                          <span key={k} className="bg-bg-canvas px-2.5 py-1 rounded-md">{k}: {String(v)}</span>
-                        ));
+                        return entries.slice(0, 3).map(([k, v]) => {
+                          const kLower = k.toLowerCase();
+                          const valText = kLower === 'fuel' ? String(v)
+                            : kLower === 'year' ? `Año ${v}`
+                            : kLower === 'kilometers' || kLower === 'kms' ? `${Number(String(v).replace(/[^\d]/g, '')).toLocaleString()} KM`
+                            : `${formatSpecLabel(k)}: ${v}`;
+                          return (
+                            <span key={k} className="bg-bg-canvas px-2.5 py-1 rounded-md">{valText}</span>
+                          );
+                        });
                       }
                       return (
                         <>
