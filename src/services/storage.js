@@ -65,26 +65,7 @@ export const DEFAULT_STAGGERED_SHOWCASE = {
   title: 'No Somos un Concesionario Tradicional',
   description: 'Facilitamos la compra y venta de vehículos y propiedades de forma directa. Revisamos cada publicación para garantizar información transparente y un proceso ágil.',
   buttonText: 'Explorar Todo el Catálogo',
-  cards: [
-    {
-      id: 'c1',
-      title: 'Porsche 911 GT3 RS',
-      subtitle: 'Edición Limitada 2023',
-      image: 'https://images.unsplash.com/photo-1614162692292-7ac56d7f7f1e?auto=format&fit=crop&w=800&q=80'
-    },
-    {
-      id: 'c2',
-      title: 'Villa Nordelta',
-      subtitle: 'Residencia sobre el lago',
-      image: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=800&q=80'
-    },
-    {
-      id: 'c3',
-      title: 'BMW M4 Competition',
-      subtitle: '510 HP / 0km',
-      image: 'https://images.unsplash.com/photo-1555215695-3004980ad54e?auto=format&fit=crop&w=800&q=80'
-    }
-  ]
+  cards: []
 };
 
 export const DEFAULT_TESTIMONIALS_SECTION = {
@@ -160,11 +141,16 @@ export async function saveListingDB(listing) {
 }
 
 export async function deleteListingDB(id) {
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from('listings')
     .delete()
-    .eq('id', id);
-  if (error) throw error;
+    .eq('id', id)
+    .select();
+  if (error) {
+    console.error('Error deleting listing from Supabase:', error);
+    throw error;
+  }
+  return data;
 }
 
 export async function saveLeadDB(lead) {
