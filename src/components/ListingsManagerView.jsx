@@ -569,6 +569,12 @@ export default function ListingsManagerView({ data, setData, refreshData }) {
       newItem.fuel = formData.fuel;
       newItem.surface = Number(formData.surface) || 0;
       newItem.rooms = Number(formData.rooms) || 0;
+    } else {
+      newItem.surface = null;
+      newItem.rooms = null;
+      newItem.bedrooms = null;
+      newItem.bathrooms = null;
+      newItem.garages = null;
     }
 
 
@@ -1581,15 +1587,29 @@ export default function ListingsManagerView({ data, setData, refreshData }) {
                         {item.surface != null && <span className="bg-bg-canvas px-2.5 py-1 rounded-md">{item.surface}% avance</span>}
                         {item.rooms != null && <span className="bg-bg-canvas px-2.5 py-1 rounded-md">{item.rooms} meses</span>}
                       </>
-                    ) : (
+                    ) : item.sectionId === 'propiedades' ? (
                       <>
-                        <span className="bg-bg-canvas px-2.5 py-1 rounded-md">{item.surface} M²</span>
-                        <span className="bg-bg-canvas px-2.5 py-1 rounded-md">{item.rooms} Ambientes</span>
+                        {item.surface ? <span className="bg-bg-canvas px-2.5 py-1 rounded-md">{item.surface} M²</span> : null}
+                        {item.rooms ? <span className="bg-bg-canvas px-2.5 py-1 rounded-md">{item.rooms} Ambientes</span> : null}
                         {item.operationType && item.operationType !== 'Venta' && (
                           <span className="bg-bg-canvas px-2.5 py-1 rounded-md">{item.operationType}</span>
                         )}
                       </>
-                    )}
+                    ) : (() => {
+                      const specsObj = item.specs || item.customFields || {};
+                      const entries = Object.entries(specsObj).filter(([_, v]) => v !== null && v !== undefined && String(v).trim() !== '');
+                      if (entries.length > 0) {
+                        return entries.slice(0, 3).map(([k, v]) => (
+                          <span key={k} className="bg-bg-canvas px-2.5 py-1 rounded-md">{k}: {String(v)}</span>
+                        ));
+                      }
+                      return (
+                        <>
+                          {item.condition && <span className="bg-bg-canvas px-2.5 py-1 rounded-md">{item.condition}</span>}
+                          {item.category && <span className="bg-bg-canvas px-2.5 py-1 rounded-md">{item.category}</span>}
+                        </>
+                      );
+                    })()}
                   </div>
                 </div>
 
