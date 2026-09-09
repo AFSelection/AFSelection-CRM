@@ -2,7 +2,7 @@
  * Automatically compresses and resizes images in the browser before upload.
  * Reduces 8MB-12MB phone camera photos down to ~120KB WebP files.
  */
-export async function compressImage(file, maxWidth = 1600, quality = 0.82) {
+export async function compressImage(file, maxWidth = 1400, quality = 0.78) {
   if (!file || !file.type.startsWith('image/')) {
     return file;
   }
