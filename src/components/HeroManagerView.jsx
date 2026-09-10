@@ -161,7 +161,10 @@ export default function HeroManagerView() {
         const fileName = `hero_${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
         const { error } = await supabase.storage
           .from('listings')
-          .upload(`hero/${fileName}`, fileToUpload);
+          .upload(`hero/${fileName}`, fileToUpload, {
+            cacheControl: '31536000',
+            contentType: fileToUpload.type
+          });
         if (error) throw error;
         const { data: { publicUrl } } = supabase.storage
           .from('listings')

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Trash2, Layers, FolderPlus, Save, Image as ImageIcon, Upload, ShieldCheck, Heart, Star, CheckCircle, RefreshCw, FileCode, Search, Check, Sparkles, Sliders } from 'lucide-react';
 import { supabase } from '../services/supabase';
+import { compressImage } from '../utils/compressor';
 import { fetchSiteSetting, saveSiteSetting, saveSectionsDB, DEFAULT_STAGGERED_SHOWCASE, DEFAULT_TESTIMONIALS_SECTION } from '../services/storage';
 import ConfirmModal from './ConfirmModal';
 import SectionIcon from './SectionIcon';
@@ -300,13 +301,19 @@ export default function SectionsManagerView({ data, setData }) {
 
     setUploadingImg(keyId);
     try {
-      const fileExt = file.name.split('.').pop();
+      // Esta subida se hacía con el archivo crudo: una foto de celular entraba
+      // acá con sus 8-12 MB intactos.
+      const fileToUpload = file.type?.startsWith('image/') ? await compressImage(file) : file;
+      const fileExt = fileToUpload.name.split('.').pop();
       const fileName = `home-${Date.now()}-${Math.random().toString(36).substr(2, 6)}.${fileExt}`;
       const filePath = `sections/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
         .from('listings')
-        .upload(filePath, file);
+        .upload(filePath, fileToUpload, {
+          cacheControl: '31536000',
+          contentType: fileToUpload.type
+        });
 
       if (uploadError) throw uploadError;
 

@@ -3,6 +3,7 @@ import { Plus, Edit2, Trash2, MapPin, Image as ImageIcon, Search, X, ArrowUp, Ar
 import { saveListingDB, deleteListingDB } from '../services/storage';
 import { supabase } from '../services/supabase';
 import { compressImage } from '../utils/compressor';
+import { warmImageVariants } from '../utils/warmImage';
 import { formatSpecLabel } from '../utils/specs';
 import ConfirmModal from './ConfirmModal';
 
@@ -295,7 +296,15 @@ export default function ListingsManagerView({ data, setData, refreshData }) {
 
     const { data: uploadData, error } = await supabase.storage
       .from('listings')
-      .upload(filePath, fileToUpload);
+      .upload(filePath, fileToUpload, {
+        // El nombre lleva random + timestamp, así que el archivo nunca cambia:
+        // cachear un año evita que el visitante recurrente re-descargue todo.
+        // Antes quedaba en el default de 1 hora.
+        cacheControl: '31536000',
+        // El tipo real del archivo, no el que asumimos. Es lo que evita volver
+        // a tener PNG servidos como si fueran WebP.
+        contentType: fileToUpload.type
+      });
 
     if (error) {
       console.error('Error uploading file:', error);
@@ -305,6 +314,10 @@ export default function ListingsManagerView({ data, setData, refreshData }) {
     const { data: { publicUrl } } = supabase.storage
       .from('listings')
       .getPublicUrl(filePath);
+
+    // Deja las versiones redimensionadas ya generadas en el CDN, para que el
+    // primer visitante que abra esta publicación no espere a que se creen.
+    warmImageVariants(publicUrl);
 
     return publicUrl;
   };
