@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../services/supabase';
 import { compressImage } from '../utils/compressor';
+import { uploadToCloudinary } from '../services/cloudinary';
 import { ImageIcon, Plus, Trash2, MoveUp, MoveDown, Save, Loader2, CheckCircle2, AlertCircle, ExternalLink, Upload, Play, Video } from 'lucide-react';
 
 const DEFAULT_IMAGES = [
@@ -156,19 +157,7 @@ export default function HeroManagerView() {
     try {
       const uploaded = [];
       for (const file of files) {
-        const fileToUpload = file.type?.startsWith('image/') ? await compressImage(file) : file;
-        const ext = fileToUpload.name.split('.').pop();
-        const fileName = `hero_${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
-        const { error } = await supabase.storage
-          .from('listings')
-          .upload(`hero/${fileName}`, fileToUpload, {
-            cacheControl: '31536000',
-            contentType: fileToUpload.type
-          });
-        if (error) throw error;
-        const { data: { publicUrl } } = supabase.storage
-          .from('listings')
-          .getPublicUrl(`hero/${fileName}`);
+        const publicUrl = await uploadToCloudinary(file, 'hero');
         uploaded.push(publicUrl);
       }
       const next = [...images, ...uploaded];

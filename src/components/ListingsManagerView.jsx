@@ -3,6 +3,7 @@ import { Plus, Edit2, Trash2, MapPin, Image as ImageIcon, Search, X, ArrowUp, Ar
 import { saveListingDB, deleteListingDB } from '../services/storage';
 import { supabase } from '../services/supabase';
 import { compressImage } from '../utils/compressor';
+import { uploadToCloudinary } from '../services/cloudinary';
 import { warmImageVariants } from '../utils/warmImage';
 import { formatSpecLabel } from '../utils/specs';
 import ConfirmModal from './ConfirmModal';
@@ -288,37 +289,8 @@ export default function ListingsManagerView({ data, setData, refreshData }) {
   const listings = data.listings || [];
 
   const uploadFileToStorage = async (file, itemId) => {
-    const fileToUpload = file.type?.startsWith('image/') ? await compressImage(file) : file;
-    const fileExt = fileToUpload.name.split('.').pop();
-    const randomStr = Math.random().toString(36).substring(2, 9);
-    const fileName = `${randomStr}_${Date.now()}.${fileExt}`;
-    const filePath = `${itemId}/${fileName}`;
-
-    const { data: uploadData, error } = await supabase.storage
-      .from('listings')
-      .upload(filePath, fileToUpload, {
-        // El nombre lleva random + timestamp, así que el archivo nunca cambia:
-        // cachear un año evita que el visitante recurrente re-descargue todo.
-        // Antes quedaba en el default de 1 hora.
-        cacheControl: '31536000',
-        // El tipo real del archivo, no el que asumimos. Es lo que evita volver
-        // a tener PNG servidos como si fueran WebP.
-        contentType: fileToUpload.type
-      });
-
-    if (error) {
-      console.error('Error uploading file:', error);
-      throw error;
-    }
-
-    const { data: { publicUrl } } = supabase.storage
-      .from('listings')
-      .getPublicUrl(filePath);
-
-    // Deja las versiones redimensionadas ya generadas en el CDN, para que el
-    // primer visitante que abra esta publicación no espere a que se creen.
+    const publicUrl = await uploadToCloudinary(file, itemId);
     warmImageVariants(publicUrl);
-
     return publicUrl;
   };
 
@@ -405,19 +377,22 @@ export default function ListingsManagerView({ data, setData, refreshData }) {
     const files = Array.from(e.target.files);
     if (files.length === 0) return;
 
-    setUploadProgress('Subiendo imágenes...');
     try {
       const newUrls = [];
-      for (const file of files) {
-        const url = await uploadFileToStorage(file, tempIdRef.current);
-        newUrls.push(url);
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const url = await uploadToCloudinary(file, tempIdRef.current, (statusMsg) => {
+          setUploadProgress(`[${i + 1}/${files.length}] ${statusMsg}`);
+        });
+        if (url) newUrls.push(url);
       }
       setUploadedImages((prev) => [...prev, ...newUrls]);
     } catch (err) {
-      alert('Error al subir archivos. Asegurate de que el bucket "listings" esté configurado como Público en Supabase Storage.');
+      alert(err.message || 'Error al subir las imágenes.');
       console.error(err);
     } finally {
       setUploadProgress(null);
+      e.target.value = '';
     }
   };
 
