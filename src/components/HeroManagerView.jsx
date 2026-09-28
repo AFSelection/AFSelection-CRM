@@ -2,7 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../services/supabase';
 import { compressImage } from '../utils/compressor';
 import { uploadToCloudinary } from '../services/cloudinary';
-import { ImageIcon, Plus, Trash2, MoveUp, MoveDown, Save, Loader2, CheckCircle2, AlertCircle, ExternalLink, Upload, Play, Video } from 'lucide-react';
+import { ImageIcon, Plus, Trash2, MoveUp, MoveDown, Save, Loader2, CheckCircle2, AlertCircle, ExternalLink, Upload, Play, Video, Crop } from 'lucide-react';
+import ImageFramerModal from './ImageFramerModal';
+import { framingStyle, stripFraming, HERO_FRAMES } from '../utils/imageFraming';
 
 const DEFAULT_IMAGES = [
   'https://images.unsplash.com/photo-1614162692292-7ac56d7f7f1e?auto=format&fit=crop&w=2400&q=95'
@@ -53,6 +55,7 @@ export default function HeroManagerView() {
   const [uploading, setUploading]       = useState(false);
   const [videoUploading, setVideoUploading] = useState(false);
   const [toast, setToast]               = useState(null); // { type: 'ok'|'err', msg }
+  const [framingIndex, setFramingIndex] = useState(null); // foto abierta en el editor de encuadre
 
   useEffect(() => {
     Promise.all([loadHeroImages(), loadDefaultMediaSettings()]).then(([imgs, media]) => {
@@ -110,7 +113,7 @@ export default function HeroManagerView() {
       showToast('err', 'La URL debe comenzar con http:// o https://');
       return;
     }
-    if (images.includes(url)) {
+    if (images.some((img) => stripFraming(img) === url)) {
       showToast('err', 'Esa imagen ya está en la lista.');
       return;
     }
@@ -133,6 +136,19 @@ export default function HeroManagerView() {
       showToast('ok', 'Imagen eliminada correctamente.');
     } catch (err) {
       showToast('err', 'Error al guardar cambios: ' + err.message);
+    }
+  };
+
+  const handleSaveFraming = async (newUrl) => {
+    const idx = framingIndex;
+    setFramingIndex(null);
+    const next = images.map((u, i) => (i === idx ? newUrl : u));
+    setImages(next);
+    try {
+      await saveHeroImages(next);
+      showToast('ok', 'Encuadre guardado.');
+    } catch (err) {
+      showToast('err', 'Error al guardar el encuadre: ' + err.message);
     }
   };
 
@@ -381,6 +397,7 @@ export default function HeroManagerView() {
                     src={url}
                     alt={`Hero ${i + 1}`}
                     className="w-full h-full object-cover"
+                    style={framingStyle(url)}
                     onError={(e) => { e.target.style.display = 'none'; }}
                   />
                 </div>
@@ -406,6 +423,13 @@ export default function HeroManagerView() {
                   >
                     <ExternalLink size={13} />
                   </a>
+                  <button
+                    onClick={() => setFramingIndex(i)}
+                    title="Encuadrar: elegir qué parte de la foto se ve"
+                    className="w-8 h-8 flex items-center justify-center rounded-full text-amber-600 hover:text-amber-700 hover:bg-amber-50 transition-colors cursor-pointer"
+                  >
+                    <Crop size={13} />
+                  </button>
                   <button
                     onClick={() => handleMove(i, -1)}
                     disabled={i === 0}
@@ -436,6 +460,14 @@ export default function HeroManagerView() {
         )}
       </div>
 
+      <ImageFramerModal
+        isOpen={framingIndex !== null}
+        url={framingIndex !== null ? images[framingIndex] : null}
+        frames={HERO_FRAMES}
+        title={`Encuadrar imagen ${(framingIndex ?? 0) + 1} del Hero`}
+        onClose={() => setFramingIndex(null)}
+        onSave={handleSaveFraming}
+      />
     </div>
   );
 }

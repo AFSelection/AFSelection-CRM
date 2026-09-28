@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Trash2, Layers, FolderPlus, Save, Image as ImageIcon, Upload, ShieldCheck, Heart, Star, CheckCircle, RefreshCw, FileCode, Search, Check, Sparkles, Sliders } from 'lucide-react';
+import { Plus, Trash2, Layers, FolderPlus, Save, Image as ImageIcon, Upload, ShieldCheck, Heart, Star, CheckCircle, RefreshCw, FileCode, Search, Check, Sparkles, Sliders, Crop } from 'lucide-react';
 import { supabase } from '../services/supabase';
 import { compressImage } from '../utils/compressor';
 import { fetchSiteSetting, saveSiteSetting, saveSectionsDB, DEFAULT_STAGGERED_SHOWCASE, DEFAULT_TESTIMONIALS_SECTION } from '../services/storage';
@@ -7,6 +7,8 @@ import ConfirmModal from './ConfirmModal';
 import SectionIcon from './SectionIcon';
 import CustomSelect from './CustomSelect';
 import SectionFieldsModal from './SectionFieldsModal';
+import ImageFramerModal from './ImageFramerModal';
+import { framingStyle, staggeredFrames, TESTIMONIAL_FRAMES } from '../utils/imageFraming';
 
 export default function SectionsManagerView({ data, setData }) {
 
@@ -22,6 +24,7 @@ export default function SectionsManagerView({ data, setData }) {
   const [savingShowcase, setSavingShowcase] = useState(false);
   const [savingTestimonials, setSavingTestimonials] = useState(false);
   const [uploadingImg, setUploadingImg] = useState(null); // card id or index being uploaded
+  const [framingTarget, setFramingTarget] = useState(null); // { kind: 'staggered' | 'testimonial', idx }
 
   const [modalState, setModalState] = useState({
     isOpen: false,
@@ -797,7 +800,7 @@ export default function SectionsManagerView({ data, setData }) {
                   {/* Image Preview & Uploader */}
                   <div className="relative h-44 rounded-2xl overflow-hidden bg-bg-canvas border border-border-light group">
                     {card.image ? (
-                      <img src={card.image} alt={card.title} className="w-full h-full object-cover" />
+                      <img src={card.image} alt={card.title} className="w-full h-full object-cover" style={framingStyle(card.image)} />
                     ) : (
                       <div className="flex flex-col items-center justify-center h-full text-primary/30">
                         <ImageIcon className="w-8 h-8 mb-1" />
@@ -820,6 +823,17 @@ export default function SectionsManagerView({ data, setData }) {
                       />
                     </label>
                   </div>
+
+                  {card.image && (
+                    <button
+                      type="button"
+                      onClick={() => setFramingTarget({ kind: 'staggered', idx })}
+                      className="w-full inline-flex items-center justify-center gap-2 py-2 rounded-xl border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 text-[10px] font-extrabold uppercase tracking-wider transition-colors cursor-pointer"
+                    >
+                      <Crop className="w-3.5 h-3.5" />
+                      Encuadrar foto
+                    </button>
+                  )}
 
                   {/* Image URL Direct Input */}
                   <div className="space-y-1">
@@ -973,7 +987,7 @@ export default function SectionsManagerView({ data, setData }) {
                   {/* Image Preview & Uploader */}
                   <div className="relative h-40 rounded-2xl overflow-hidden bg-bg-canvas border border-border-light group">
                     {rev.image ? (
-                      <img src={rev.image} alt={rev.author} className="w-full h-full object-cover" />
+                      <img src={rev.image} alt={rev.author} className="w-full h-full object-cover" style={framingStyle(rev.image)} />
                     ) : (
                       <div className="flex flex-col items-center justify-center h-full text-primary/30">
                         <ImageIcon className="w-8 h-8 mb-1" />
@@ -996,6 +1010,17 @@ export default function SectionsManagerView({ data, setData }) {
                       />
                     </label>
                   </div>
+
+                  {rev.image && (
+                    <button
+                      type="button"
+                      onClick={() => setFramingTarget({ kind: 'testimonial', idx })}
+                      className="w-full inline-flex items-center justify-center gap-2 py-2 rounded-xl border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 text-[10px] font-extrabold uppercase tracking-wider transition-colors cursor-pointer"
+                    >
+                      <Crop className="w-3.5 h-3.5" />
+                      Encuadrar foto
+                    </button>
+                  )}
 
                   {/* Image URL Input */}
                   <div className="space-y-1">
@@ -1114,6 +1139,39 @@ export default function SectionsManagerView({ data, setData }) {
           </div>
         </form>
       )}
+
+      {/* Editor de encuadre de las fotos del inicio. Guarda en el borrador:
+          se publica con "Guardar Cambios en la Web", como el resto del formulario. */}
+      <ImageFramerModal
+        isOpen={framingTarget !== null}
+        url={
+          framingTarget?.kind === 'staggered'
+            ? staggeredData.cards?.[framingTarget.idx]?.image
+            : framingTarget?.kind === 'testimonial'
+            ? testimonialsData.reviews?.[framingTarget.idx]?.image
+            : null
+        }
+        frames={framingTarget?.kind === 'testimonial' ? TESTIMONIAL_FRAMES : staggeredFrames(framingTarget?.idx ?? 0)}
+        title={
+          framingTarget?.kind === 'testimonial'
+            ? `Encuadrar foto de la reseña ${(framingTarget?.idx ?? 0) + 1}`
+            : `Encuadrar tarjeta ${(framingTarget?.idx ?? 0) + 1}`
+        }
+        onClose={() => setFramingTarget(null)}
+        onSave={(newUrl) => {
+          const { kind, idx } = framingTarget;
+          if (kind === 'staggered') {
+            const updated = [...staggeredData.cards];
+            updated[idx] = { ...updated[idx], image: newUrl };
+            setStaggeredData({ ...staggeredData, cards: updated });
+          } else {
+            const updated = [...testimonialsData.reviews];
+            updated[idx] = { ...updated[idx], image: newUrl };
+            setTestimonialsData({ ...testimonialsData, reviews: updated });
+          }
+          setFramingTarget(null);
+        }}
+      />
 
       {/* Custom Notice / Confirm Modal */}
       <ConfirmModal

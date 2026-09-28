@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Plus, Edit2, Trash2, MapPin, Image as ImageIcon, Search, X, ArrowUp, ArrowDown, Upload, Film, Play, Percent } from 'lucide-react';
+import { Plus, Edit2, Trash2, MapPin, Image as ImageIcon, Search, X, ArrowUp, ArrowDown, Upload, Film, Play, Percent, Crop } from 'lucide-react';
 import { saveListingDB, deleteListingDB } from '../services/storage';
 import { supabase } from '../services/supabase';
 import { compressImage } from '../utils/compressor';
@@ -7,6 +7,8 @@ import { uploadToCloudinary } from '../services/cloudinary';
 import { warmImageVariants } from '../utils/warmImage';
 import { formatSpecLabel } from '../utils/specs';
 import ConfirmModal from './ConfirmModal';
+import ImageFramerModal from './ImageFramerModal';
+import { framingStyle, listingFrames } from '../utils/imageFraming';
 
 // Location search with Nominatim (OpenStreetMap) geocoding
 function LocationSearch({ location, onTextChange, onSelect }) {
@@ -249,6 +251,7 @@ export default function ListingsManagerView({ data, setData, refreshData }) {
   const [uploadedVideos, setUploadedVideos] = useState([]);
   const [uploadProgress, setUploadProgress] = useState(null);
   const [videoLinkInput, setVideoLinkInput] = useState('');
+  const [framingIndex, setFramingIndex] = useState(null); // foto abierta en el editor de encuadre
 
   const tempIdRef = useRef('');
 
@@ -1164,6 +1167,9 @@ export default function ListingsManagerView({ data, setData, refreshData }) {
                   <p className="text-[10px] text-primary/40 mt-0.5">
                     Las primeras 2 definirán la portada y hover del catálogo.
                   </p>
+                  <p className="text-[10px] text-primary/40 mt-0.5 flex items-center gap-1">
+                    <Crop className="w-3 h-3 text-amber-500" /> Encuadrá cada foto para elegir qué parte se ve en el sitio.
+                  </p>
                 </div>
 
                 <label className="inline-flex items-center justify-center gap-2 bg-primary/5 hover:bg-primary/10 text-primary border border-primary/20 text-xs font-bold uppercase tracking-wider py-2.5 px-4 rounded-xl cursor-pointer transition-colors">
@@ -1209,11 +1215,20 @@ export default function ListingsManagerView({ data, setData, refreshData }) {
                         <img
                           src={imgUrl}
                           alt={`Photo ${index}`}
-                          className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                          className="absolute inset-0 w-full h-full object-cover"
+                          style={framingStyle(imgUrl)}
                         />
-                        
+
                         {/* Floating actions */}
                         <div className="absolute top-2 right-2 flex items-center gap-1 bg-black/75 backdrop-blur-md p-1.5 rounded-xl shadow-md z-10">
+                          <button
+                            type="button"
+                            onClick={() => setFramingIndex(index)}
+                            className="p-1 text-amber-300 hover:text-amber-200 cursor-pointer"
+                            title="Encuadrar: elegir qué parte de la foto se ve"
+                          >
+                            <Crop className="w-3.5 h-3.5" />
+                          </button>
                           <button
                             type="button"
                             disabled={index === 0}
@@ -1409,6 +1424,18 @@ export default function ListingsManagerView({ data, setData, refreshData }) {
           </div>
         </div>
 
+        <ImageFramerModal
+          isOpen={framingIndex !== null}
+          url={framingIndex !== null ? uploadedImages[framingIndex] : null}
+          frames={listingFrames(framingIndex ?? 0)}
+          title={framingIndex === 0 ? 'Encuadrar portada' : `Encuadrar imagen ${(framingIndex ?? 0) + 1}`}
+          onClose={() => setFramingIndex(null)}
+          onSave={(newUrl) => {
+            setUploadedImages((prev) => prev.map((u, i) => (i === framingIndex ? newUrl : u)));
+            setFramingIndex(null);
+          }}
+        />
+
         {/* Custom Confirm & Notice Modal */}
         <ConfirmModal
           isOpen={modalState.isOpen}
@@ -1522,6 +1549,7 @@ export default function ListingsManagerView({ data, setData, refreshData }) {
                   src={item.images?.[0] || 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=800&q=80'}
                   alt={item.title}
                   className="w-full h-full object-cover"
+                  style={framingStyle(item.images?.[0])}
                 />
                 
                 {/* Badges Overlay */}
