@@ -44,7 +44,9 @@ export function warmImageVariants(publicUrl) {
   for (const { width, quality } of VARIANTS) {
     // `no-store` para que el navegador del CRM no se llene con estas imágenes:
     // lo que nos interesa es que quede caliente el CDN, no esta máquina.
-    fetch(`${base}?width=${width}&quality=${quality}`, {
+    // `resize=contain` en el mismo orden que buildImageUrl del cliente: sin él
+    // Supabase recorta los costados, y además serían URLs que nadie pide.
+    fetch(`${base}?width=${width}&resize=contain&quality=${quality}`, {
       headers: { Accept: 'image/webp,image/avif,image/*,*/*' },
       cache: 'no-store'
     }).catch(() => {});
